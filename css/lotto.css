@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap');
+
+:root { --gold: #f5ca70; --gold-light: #fff0bb; }
+* { box-sizing: border-box; }
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  display: grid;
+  place-items: center;
+  overflow-x: hidden;
+  color: #fff;
+  font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  background: radial-gradient(ellipse at center, #26344c, #080b13 75%);
+}
+button, a { font: inherit; }
+#fireworks { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
+.lotto-stage {
+  width: min(1240px, 94vw, calc((100svh - 40px) * 16 / 9));
+  min-height: 570px;
+  max-height: calc(100svh - 40px);
+  aspect-ratio: 16 / 9;
+  padding: clamp(20px, 3vw, 42px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  border: 1px solid #92733d;
+  border-radius: 22px;
+  background: radial-gradient(ellipse at center, #253149, #0a0e18 75%);
+  box-shadow: 0 0 60px #000;
+}
+.lotto-stage::before { content: ""; position: absolute; inset: 12px; border: 1px solid rgba(245,202,112,.12); border-radius: 15px; pointer-events: none; }
+.lotto-header { z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.home-link { color: #d8e0ee; text-decoration: none; font-size: 13px; }
+.home-link:hover { color: var(--gold); }
+.lotto-logo { color: var(--gold); font-size: 15px; font-weight: 900; letter-spacing: 4px; }
+.header-spacer { width: 90px; }
+.lotto-main { z-index: 1; margin: auto 0; }
+.lotto-eyebrow { color: var(--gold); font-size: 13px; font-weight: 800; letter-spacing: 7px; }
+h1 { margin: 15px 0; color: var(--gold-light); font-size: clamp(38px, 5.5vw, 68px); letter-spacing: 3px; text-shadow: 0 0 30px #dca63e; }
+.lotto-subtitle { color: #bac5d8; font-size: clamp(13px, 1.5vw, 18px); letter-spacing: 1px; }
+.countdown { height: 60px; margin-top: 14px; color: var(--gold); font-size: 48px; font-weight: 900; text-shadow: 0 0 25px #f5b942; }
+.balls { width: min(900px, 95%); margin: 18px auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: clamp(8px, 2vw, 24px); }
+.ball { width: 100%; max-width: 125px; aspect-ratio: 1; margin: auto; display: flex; align-items: center; justify-content: center; border: 2px solid #68758b; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #44516a, #182236); color: #e0e6f0; font-size: clamp(23px, 4vw, 43px); font-weight: 900; box-shadow: inset 0 0 15px #000; }
+.ball.spinning { animation: spin .12s infinite alternate; }
+.ball.revealed { border: 3px solid #fff2bc; background: radial-gradient(circle at 34% 27%, #fffbdc, #f5ce70 48%, #b77b1e); color: #33200a; box-shadow: 0 0 35px #f5ca70; animation: reveal .65s; }
+.ball.last { box-shadow: 0 0 30px #fff1ac, 0 0 80px #ffb72d; }
+@keyframes spin { from { transform: translateY(-3px) rotate(-5deg); } to { transform: translateY(3px) rotate(5deg); } }
+@keyframes reveal { 0% { transform: scale(.1); opacity: 0; } 70% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
+.status { min-height: 32px; margin: 17px 0; color: var(--gold); font-size: clamp(15px, 2vw, 22px); font-weight: 700; }
+.start-button { min-width: 290px; padding: 17px 38px; border: 0; border-radius: 50px; background: linear-gradient(120deg, #fff0ad, #f2c35a, #c88a28); color: #271a06; font-size: 18px; font-weight: 900; box-shadow: 0 0 30px #c38b32; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+.start-button:hover:not(:disabled) { transform: scale(1.04); box-shadow: 0 0 45px #f5ca70; }
+.start-button:disabled { opacity: .55; cursor: wait; }
+.result-summary { width: min(620px, 95%); margin: 20px auto 0; padding: 16px 18px; border: 1px solid rgba(245,202,112,.58); border-radius: 16px; background: rgba(9,15,26,.88); animation: reveal .55s ease; }
+.result-summary[hidden] { display: none; }
+.result-label { margin: 0; color: var(--gold); font-size: 10px; font-weight: 800; letter-spacing: 3px; }
+.result-summary h2 { margin: 5px 0 12px; color: var(--gold-light); font-size: 19px; }
+.summary-balls { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.summary-number { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(140deg, #fff4c8, #eab84f); color: #30200a; font-size: 16px; font-weight: 900; box-shadow: 0 0 16px rgba(245,202,112,.28); }
+.lotto-footer { z-index: 1; color: #78869c; font-size: 10px; letter-spacing: 3px; }
+@media (max-width: 700px) {
+  body { padding: 8px; }
+  .lotto-stage { width: 96vw; min-height: 720px; max-height: none; aspect-ratio: auto; padding: 20px 12px; }
+  .lotto-header { flex-wrap: wrap; }
+  .lotto-logo { letter-spacing: 2px; }
+  .header-spacer { display: none; }
+  .balls { grid-template-columns: repeat(3, 1fr); max-width: 380px; gap: 15px; }
+  .ball { width: 85%; }
+  .start-button { width: 90%; min-width: 0; }
+  .lotto-eyebrow { letter-spacing: 3px; }
+  .result-summary { margin-top: 20px; }
+}
