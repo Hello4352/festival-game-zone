@@ -1,6 +1,6 @@
 
 const SITE_CONFIG = {
-  siteTitle: "게임 부스",
+  siteTitle: "카지노",
   siteSubtitle: "원하는 게임을 선택해 도전해 보세요!",
   siteFooter: "ENJOY THE FESTIVAL",
 
@@ -24,25 +24,11 @@ const SITE_CONFIG = {
   ],
 
   miniGames: [
-    "미니게임 1",
-    "미니게임 2",
-    "미니게임 3",
-    "미니게임 4",
-    "미니게임 5",
-    "미니게임 6"
+    "2048",
+    "벽돌 깨기",
+    "반응속도 테스트",
+    "오목",
+    "Snake",
+    "Neon Shooter"
   ]
-};
-
-const LOTTO_CONFIG = {
-  eyebrow: "THE GRAND FINALE",
-  title: "THE FINAL DRAW",
-  subtitle: "축제의 마지막 순간, 행운의 주인공이 탄생한다.",
-  footer: "ONE LAST CHANCE · ONE LUCKY WINNER",
-  startText: "운명의 추첨을 시작한다",
-  drawingText: "운명의 번호가 공개됩니다...",
-  lastNumberText: "마지막 번호... 운명의 순간!",
-  finishText: "오늘의 행운의 번호가 탄생했습니다!",
-  countdownSeconds: 3,
-  revealInterval: 2800,
-  lastNumberPause: 2800
 };
