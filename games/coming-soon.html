@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <title>게임 준비 중 | 카지노</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at top, #1b2b43, #0b1220 65%);
+      color: #fff0c5;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      text-align: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      padding: 45px 25px;
+      border: 1px solid #9b7840;
+      border-radius: 30px;
+      background: linear-gradient(145deg, #1b2d47, #142137);
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+
+    .eyebrow {
+      color: #e7c477;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 4px;
+    }
+
+    h1 {
+      margin: 25px 0 15px;
+      font-size: clamp(30px, 7vw, 45px);
+    }
+
+    p {
+      color: #aebbd0;
+      line-height: 1.8;
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 22px;
+      border: 1px solid #9b7840;
+      border-radius: 30px;
+      color: #e7c477;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 35px;
+      padding: 13px 25px;
+      border: 1px solid #e7c477;
+      border-radius: 30px;
+      color: #fff0c5;
+      text-decoration: none;
+    }
+
+    a:hover {
+      background: #8b642b;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="eyebrow">CASINO MINI GAME</div>
+
+    <h1 id="gameTitle">게임 이름</h1>
+
+    <p>
+      이 게임은 현재 제작 준비 중입니다.<br>
+      조금만 기다려 주세요!
+    </p>
+
+    <div class="status">COMING SOON</div>
+
+    <br>
+
+    <a href="../index.html">카지노 메인으로 돌아가기</a>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const gameName = params.get("game") || "미니게임";
+
+    document.getElementById("gameTitle").textContent = gameName;
+    document.title = gameName + " | 카지노";
+  </script>
+</body>
+</html>
