@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <title>Neon Shooter | 카지노</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0b1220;
+      color: #f5f0df;
+      font-family: Arial, sans-serif;
+    }
+
+    .game {
+      width: 100%;
+      max-width: 460px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #e9c76b;
+      margin-bottom: 8px;
+    }
+
+    .description {
+      color: #b8c0ce;
+      line-height: 1.5;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .stat {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #536078;
+      border-radius: 10px;
+      background: #142036;
+    }
+
+    .stat small {
+      display: block;
+      color: #aeb8c9;
+      margin-bottom: 6px;
+    }
+
+    .stat strong {
+      color: #e9c76b;
+      font-size: 21px;
+    }
+
+    .board-wrap {
+      border: 2px solid #d6ad4c;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #080e1a;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    .message {
+      min-height: 28px;
+      margin: 14px 0;
+      color: #e9c76b;
+      font-weight: bold;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 13px;
+      background: #e9c76b;
+      color: #172033;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .start {
+      width: 100%;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 15px;
+    }
+
+    .controls button {
+      width: 90px;
+      height: 52px;
+      font-size: 23px;
+      background: #263750;
+      color: #f5f0df;
+      border: 1px solid #536078;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 22px;
+      color: #e9c76b;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>Neon Shooter</h1>
+    <p class="description">
+      좌우로 움직여 적을 피하세요!<br>
+      오래 버틸수록 높은 점수를 얻을 수 있습니다.
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <small>점수</small>
+        <strong id="score">0</strong>
+      </div>
+      <div class="stat">
+        <small>최고 기록</small>
+        <strong id="best">0</strong>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board" width="400" height="560"></canvas>
+    </div>
+
+    <div class="message" id="message">
+      시작 버튼을 눌러 도전하세요!
+    </div>
+
+    <button class="start" id="start">게임 시작</button>
+
+    <div class="controls">
+      <button id="left">◀</button>
+      <button id="right">▶</button>
+    </div>
+
+    <a class="back" href="../index.html">← 카지노 메인으로</a>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+
+    const scoreText = document.getElementById("score");
+    const bestText = document.getElementById("best");
+    const message = document.getElementById("message");
+    const startButton = document.getElementById("start");
+
+    const W = canvas.width;
+    const H = canvas.height;
+
+    let player;
+    let enemies;
+    let stars;
+    let score = 0;
+    let best = 0;
+    let running = false;
+    let animationId = null;
+    let lastTime = 0;
+    let spawnTimer = 0;
+    let keys = { left: false, right: false };
+
+    try {
+      best = Number(localStorage.getItem("neonBest")) || 0;
+    } catch (error) {
+      best = 0;
+    }
+
+    bestText.textContent = best;
+
+    function resetGame() {
+      player = { x: W / 2 - 16, y: H - 65, w: 32, h: 32 };
+      enemies = [];
+      stars = Array.from({ length: 65 }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        speed: 20 + Math.random() * 60
+      }));
+
+      score = 0;
+      spawnTimer = 0;
+      lastTime = 0;
+      keys.left = false;
+      keys.right = false;
+
+      scoreText.textContent = "0";
+      draw();
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "#39e7ff";
+      ctx.fillStyle = "#39e7ff";
+
+      ctx.beginPath();
+      ctx.moveTo(player.x + player.w / 2, player.y);
+      ctx.lineTo(player.x + player.w, player.y + player.h);
+      ctx.lineTo(player.x, player.y + player.h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawEnemy(enemy) {
+      ctx.save();
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "#ff4c86";
+      ctx.fillStyle = "#ff4c86";
+
+      ctx.beginPath();
+      ctx.arc(
+        enemy.x + enemy.size / 2,
+        enemy.y + enemy.size / 2,
+        enemy.size / 2,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.fillStyle = "#080e1a";
+      ctx.fillRect(0, 0, W, H);
+
+      // 배경 별
+      ctx.fillStyle = "#52647e";
+
+      stars.forEach(star => {
+        ctx.fillRect(star.x, star.y, 2, 2);
+      });
+
+      enemies.forEach(drawEnemy);
+      drawPlayer();
+    }
+
+    function spawnEnemy() {
+      const size = 20 + Math.random() * 15;
+
+      enemies.push({
+        x: Math.random() * (W - size),
+        y: -size,
+        size,
+        speed: 130 + Math.random() * 90 + score * 0.5
+      });
+    }
+
+    function isColliding(a, b) {
+      return (
+        a.x < b.x + b.size &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.size &&
+        a.y + a.h > b.y
+      );
+    }
+
+    function update(delta) {
+      const dt = Math.min(delta / 1000, 0.04);
+
+      // 별 이동
+      stars.forEach(star => {
+        star.y += star.speed * dt;
+
+        if (star.y > H) {
+          star.y = 0;
+          star.x = Math.random() * W;
+        }
+      });
+
+      // 플레이어 이동
+      const speed = 270;
+
+      if (keys.left) player.x -= speed * dt;
+      if (keys.right) player.x += speed * dt;
+
+      player.x = Math.max(
+        0,
+        Math.min(W - player.w, player.x)
+      );
+
+      // 적 생성
+      spawnTimer += delta;
+
+      const spawnInterval = Math.max(260, 900 - score * 2);
+
+      if (spawnTimer >= spawnInterval) {
+        spawnTimer = 0;
+        spawnEnemy();
+      }
+
+      // 적 이동 및 충돌
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        enemy.y += enemy.speed * dt;
+
+        if (isColliding(player, enemy)) {
+          endGame();
+          return;
+        }
+
+        if (enemy.y > H) {
+          enemies.splice(i, 1);
+          score += 10;
+          scoreText.textContent = score;
+
+          if (score > best) {
+            best = score;
+            bestText.textContent = best;
+
+            try {
+              localStorage.setItem("neonBest", String(best));
+            } catch (error) {
+              // 저장이 제한된 환경에서는 현재 기록만 표시합니다.
+            }
+          }
+        }
+      }
+    }
+
+    function loop(timestamp) {
+      if (!running) return;
+
+      if (!lastTime) lastTime = timestamp;
+
+      const delta = timestamp - lastTime;
+      lastTime = timestamp;
+
+      update(delta);
+      draw();
+
+      if (running) {
+        animationId = requestAnimationFrame(loop);
+      }
+    }
+
+    function startGame() {
+      if (running) return;
+
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+      }
+
+      resetGame();
+      running = true;
+      message.textContent = "적을 피하세요!";
+      startButton.textContent = "게임 진행 중";
+      startButton.disabled = true;
+
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function endGame() {
+      running = false;
+      keys.left = false;
+      keys.right = false;
+
+      message.textContent = "게임 종료! 최종 점수: " + score;
+      startButton.textContent = "다시 시작";
+      startButton.disabled = false;
+    }
+
+    function bindControl(button, direction) {
+      button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        keys[direction] = true;
+      });
+
+      button.addEventListener("pointerup", () => {
+        keys[direction] = false;
+      });
+
+      button.addEventListener("pointerleave", () => {
+        keys[direction] = false;
+      });
+
+      button.addEventListener("pointercancel", () => {
+        keys[direction] = false;
+      });
+    }
+
+    bindControl(document.getElementById("left"), "left");
+    bindControl(document.getElementById("right"), "right");
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft" || event.key === "a") {
+        keys.left = true;
+        event.preventDefault();
+      }
+
+      if (event.key === "ArrowRight" || event.key === "d") {
+        keys.right = true;
+        event.preventDefault();
+      }
+    });
+
+    document.addEventListener("keyup", event => {
+      if (event.key === "ArrowLeft" || event.key === "a") {
+        keys.left = false;
+      }
+
+      if (event.key === "ArrowRight" || event.key === "d") {
+        keys.right = false;
+      }
+    });
+
+    startButton.addEventListener("click", startGame);
+
+    resetGame();
+  </script>
+</body>
+</html>
