@@ -20,7 +20,7 @@
     "games/2048.html",
     "games/brick-breaker.html",
     "games/reaction.html",
-    "games/omok",
+    "games/omok.html",
     "games/Snake",
     "games/coming-soon.html?game=Neon%20Shooter",
     "games/coming-soon.html?game=Chess%20AI",
