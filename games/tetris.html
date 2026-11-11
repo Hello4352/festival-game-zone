@@ -1,0 +1,588 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <title>테트리스 | 카지노</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0b1220;
+      color: #f5f0df;
+      font-family: Arial, sans-serif;
+    }
+
+    .game {
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #e9c76b;
+      margin-bottom: 8px;
+    }
+
+    .description {
+      color: #b8c0ce;
+      line-height: 1.5;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .stat {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #536078;
+      border-radius: 10px;
+      background: #142036;
+    }
+
+    .stat small {
+      display: block;
+      color: #aeb8c9;
+      margin-bottom: 5px;
+    }
+
+    .stat strong {
+      color: #e9c76b;
+      font-size: 20px;
+    }
+
+    .board-wrap {
+      display: inline-block;
+      padding: 5px;
+      border: 2px solid #d6ad4c;
+      border-radius: 8px;
+      background: #080e1a;
+    }
+
+    canvas {
+      display: block;
+      width: min(80vw, 300px);
+      height: auto;
+      touch-action: none;
+    }
+
+    .message {
+      min-height: 26px;
+      margin: 12px 0;
+      color: #e9c76b;
+      font-weight: bold;
+    }
+
+    .main-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px;
+      background: #e9c76b;
+      color: #172033;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .main-buttons button {
+      flex: 1;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .controls button {
+      min-height: 48px;
+      background: #263750;
+      color: #f5f0df;
+      border: 1px solid #536078;
+      font-size: 20px;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 20px;
+      color: #e9c76b;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>테트리스</h1>
+    <p class="description">
+      블록을 회전하고 이동시켜 가로줄을 완성하세요!
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <small>점수</small>
+        <strong id="score">0</strong>
+      </div>
+      <div class="stat">
+        <small>최고 기록</small>
+        <strong id="best">0</strong>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board" width="300" height="600"></canvas>
+    </div>
+
+    <div class="message" id="message">
+      시작 버튼을 눌러 주세요!
+    </div>
+
+    <div class="main-buttons">
+      <button id="start">게임 시작</button>
+      <button id="pause">일시정지</button>
+    </div>
+
+    <div class="controls">
+      <button data-action="left">◀</button>
+      <button data-action="rotate">↻</button>
+      <button data-action="right">▶</button>
+      <button data-action="down">▼</button>
+    </div>
+
+    <a class="back" href="../index.html">← 카지노 메인으로</a>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+
+    const scoreText = document.getElementById("score");
+    const bestText = document.getElementById("best");
+    const message = document.getElementById("message");
+
+    const startButton = document.getElementById("start");
+    const pauseButton = document.getElementById("pause");
+
+    const COLS = 10;
+    const ROWS = 20;
+    const SIZE = 30;
+
+    const colors = [
+      null,
+      "#35d9e8",
+      "#4267e8",
+      "#f49b35",
+      "#e9d44e",
+      "#45c879",
+      "#a45de8",
+      "#e95772"
+    ];
+
+    const shapes = [
+      null,
+      [[1,1,1,1]],
+      [[1,0,0],[1,1,1]],
+      [[0,0,1],[1,1,1]],
+      [[1,1],[1,1]],
+      [[0,1,1],[1,1,0]],
+      [[0,1,0],[1,1,1]],
+      [[1,1,0],[0,1,1]]
+    ];
+
+    let arena;
+    let player;
+    let score = 0;
+    let best = 0;
+    let running = false;
+    let paused = false;
+    let gameOver = false;
+
+    let dropCounter = 0;
+    let dropInterval = 800;
+    let lastTime = 0;
+    let animationId = null;
+
+    try {
+      best = Number(localStorage.getItem("tetrisBest")) || 0;
+    } catch (error) {
+      best = 0;
+    }
+
+    bestText.textContent = best;
+
+    function createPiece() {
+      const type = Math.floor(Math.random() * 7) + 1;
+
+      return {
+        matrix: shapes[type].map(row => [...row]),
+        color: type,
+        pos: { x: 3, y: 0 }
+      };
+    }
+
+    function createArena() {
+      return Array.from(
+        { length: ROWS },
+        () => Array(COLS).fill(0)
+      );
+    }
+
+    function collide(arena, player) {
+      const matrix = player.matrix;
+      const pos = player.pos;
+
+      for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+          if (!matrix[y][x]) continue;
+
+          const nx = x + pos.x;
+          const ny = y + pos.y;
+
+          if (
+            nx < 0 ||
+            nx >= COLS ||
+            ny >= ROWS ||
+            (ny >= 0 && arena[ny][nx])
+          ) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    function merge(arena, player) {
+      player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value) {
+            const ny = y + player.pos.y;
+            const nx = x + player.pos.x;
+
+            if (ny >= 0) {
+              arena[ny][nx] = player.color;
+            }
+          }
+        });
+      });
+    }
+
+    function rotate(matrix) {
+      return matrix[0].map((_, index) =>
+        matrix.map(row => row[index]).reverse()
+      );
+    }
+
+    function playerRotate() {
+      if (!running || paused || gameOver) return;
+
+      const original = player.matrix;
+      const oldX = player.pos.x;
+
+      player.matrix = rotate(player.matrix);
+
+      let offset = 1;
+
+      while (collide(arena, player)) {
+        player.pos.x += offset;
+        offset = -(offset + (offset > 0 ? 1 : -1));
+
+        if (Math.abs(offset) > player.matrix[0].length) {
+          player.matrix = original;
+          player.pos.x = oldX;
+          return;
+        }
+      }
+    }
+
+    function playerMove(direction) {
+      if (!running || paused || gameOver) return;
+
+      player.pos.x += direction;
+
+      if (collide(arena, player)) {
+        player.pos.x -= direction;
+      }
+    }
+
+    function playerDrop() {
+      if (!running || paused || gameOver) return;
+
+      player.pos.y++;
+
+      if (collide(arena, player)) {
+        player.pos.y--;
+        lockPiece();
+      }
+
+      dropCounter = 0;
+    }
+
+    function lockPiece() {
+      merge(arena, player);
+      clearLines();
+
+      player = createPiece();
+
+      if (collide(arena, player)) {
+        endGame();
+      }
+    }
+
+    function clearLines() {
+      let lines = 0;
+
+      outer: for (let y = ROWS - 1; y >= 0; y--) {
+        for (let x = 0; x < COLS; x++) {
+          if (!arena[y][x]) continue outer;
+        }
+
+        arena.splice(y, 1);
+        arena.unshift(Array(COLS).fill(0));
+        lines++;
+        y++;
+      }
+
+      const points = [0, 100, 300, 500, 800];
+
+      if (lines > 0) {
+        score += points[Math.min(lines, 4)];
+        scoreText.textContent = score;
+
+        dropInterval = Math.max(
+          120,
+          800 - Math.floor(score / 500) * 60
+        );
+
+        if (score > best) {
+          best = score;
+          bestText.textContent = best;
+
+          try {
+            localStorage.setItem("tetrisBest", String(best));
+          } catch (error) {
+            // 저장이 제한된 환경에서는 현재 기록만 표시합니다.
+          }
+        }
+      }
+    }
+
+    function drawCell(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
+
+      ctx.strokeStyle = "#101b2b";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x * SIZE, y * SIZE, SIZE, SIZE);
+
+      ctx.fillStyle = "#ffffff33";
+      ctx.fillRect(x * SIZE + 3, y * SIZE + 3, SIZE - 6, 3);
+    }
+
+    function drawMatrix(matrix, offset, color) {
+      matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value && y + offset.y >= 0) {
+            drawCell(x + offset.x, y + offset.y, color);
+          }
+        });
+      });
+    }
+
+    function draw() {
+      ctx.fillStyle = "#080e1a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 격자
+      ctx.strokeStyle = "#1c2b40";
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x <= COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * SIZE, 0);
+        ctx.lineTo(x * SIZE, canvas.height);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * SIZE);
+        ctx.lineTo(canvas.width, y * SIZE);
+        ctx.stroke();
+      }
+
+      arena.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value) drawCell(x, y, colors[value]);
+        });
+      });
+
+      if (player) {
+        drawMatrix(
+          player.matrix,
+          player.pos,
+          colors[player.color]
+        );
+      }
+    }
+
+    function update(time = 0) {
+      if (!running || paused || gameOver) return;
+
+      const delta = time - lastTime;
+      lastTime = time;
+
+      dropCounter += delta;
+
+      if (dropCounter > dropInterval) {
+        playerDrop();
+      }
+
+      draw();
+
+      if (running && !paused) {
+        animationId = requestAnimationFrame(update);
+      }
+    }
+
+    function startGame() {
+      if (running && !paused) return;
+
+      if (paused) {
+        paused = false;
+        running = true;
+        lastTime = 0;
+        message.textContent = "게임 진행 중!";
+        pauseButton.textContent = "일시정지";
+        animationId = requestAnimationFrame(update);
+        return;
+      }
+
+      resetGame();
+
+      running = true;
+      paused = false;
+      gameOver = false;
+
+      message.textContent = "블록을 쌓아 보세요!";
+      startButton.textContent = "새 게임";
+      pauseButton.textContent = "일시정지";
+
+      lastTime = 0;
+      animationId = requestAnimationFrame(update);
+    }
+
+    function togglePause() {
+      if (!running || gameOver) return;
+
+      paused = !paused;
+
+      if (paused) {
+        cancelAnimationFrame(animationId);
+        message.textContent = "일시정지 중";
+        pauseButton.textContent = "계속하기";
+      } else {
+        lastTime = 0;
+        message.textContent = "게임 진행 중!";
+        pauseButton.textContent = "일시정지";
+        animationId = requestAnimationFrame(update);
+      }
+    }
+
+    function endGame() {
+      running = false;
+      paused = false;
+      gameOver = true;
+
+      cancelAnimationFrame(animationId);
+
+      message.textContent = "게임 종료! 최종 점수: " + score;
+      startButton.textContent = "다시 시작";
+      pauseButton.textContent = "일시정지";
+    }
+
+    function resetGame() {
+      cancelAnimationFrame(animationId);
+
+      arena = createArena();
+      player = createPiece();
+
+      score = 0;
+      dropCounter = 0;
+      dropInterval = 800;
+      lastTime = 0;
+
+      scoreText.textContent = "0";
+      draw();
+
+      running = false;
+      paused = false;
+      gameOver = false;
+
+      message.textContent = "시작 버튼을 눌러 주세요!";
+      startButton.textContent = "게임 시작";
+      pauseButton.textContent = "일시정지";
+    }
+
+    function action(name) {
+      if (name === "left") playerMove(-1);
+      if (name === "right") playerMove(1);
+      if (name === "down") playerDrop();
+      if (name === "rotate") playerRotate();
+
+      draw();
+    }
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        action("left");
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        action("right");
+      }
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        action("down");
+      }
+
+      if (event.key === "ArrowUp" || event.key === " ") {
+        event.preventDefault();
+        action("rotate");
+      }
+    });
+
+    document.querySelectorAll("[data-action]").forEach(button => {
+      button.addEventListener("click", () => {
+        action(button.dataset.action);
+      });
+    });
+
+    startButton.addEventListener("click", startGame);
+    pauseButton.addEventListener("click", togglePause);
+
+    resetGame();
+  </script>
+</body>
+</html>
