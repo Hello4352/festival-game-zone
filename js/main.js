@@ -19,7 +19,7 @@
   const gameLinks = [
     "games/2048.html",
     "games/brick-breaker.html",
-    "games/coming-soon.html?game=반응속도%20테스트",
+    "games/reaction.html",
     "games/coming-soon.html?game=오목",
     "games/coming-soon.html?game=Snake",
     "games/coming-soon.html?game=Neon%20Shooter",
