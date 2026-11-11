@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <title>반응속도 테스트 | 카지노</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0b1220;
+      color: #f5f0df;
+      font-family: Arial, sans-serif;
+    }
+
+    .game {
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #e9c76b;
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      color: #b8c0ce;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .screen {
+      min-height: 280px;
+      padding: 25px;
+      border: 2px solid #d6ad4c;
+      border-radius: 18px;
+      background: #17243a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      transition: background 0.15s;
+    }
+
+    .screen.waiting {
+      background: #a33b42;
+    }
+
+    .screen.ready {
+      background: #16834e;
+    }
+
+    .screen.result {
+      background: #253650;
+    }
+
+    .message {
+      font-size: 25px;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    .sub-message {
+      color: #e0e5ed;
+      font-size: 15px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 15px 25px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .start-button {
+      width: 100%;
+      margin-top: 20px;
+      color: #172033;
+      background: #e9c76b;
+    }
+
+    .start-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      flex: 1;
+      padding: 15px 8px;
+      border: 1px solid #536078;
+      border-radius: 12px;
+      background: #142036;
+    }
+
+    .stat small {
+      display: block;
+      color: #aeb8c9;
+      margin-bottom: 8px;
+    }
+
+    .stat strong {
+      color: #e9c76b;
+      font-size: 21px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 25px;
+      color: #e9c76b;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="game">
+    <h1>반응속도 테스트</h1>
+    <p class="description">
+      화면이 초록색으로 바뀌는 순간 화면을 눌러 보세요!<br>
+      얼마나 빠르게 반응할 수 있을까요?
+    </p>
+
+    <section class="screen" id="screen">
+      <div class="message" id="message">준비되셨나요?</div>
+      <div class="sub-message" id="subMessage">
+        시작 버튼을 눌러 도전하세요.
+      </div>
+    </section>
+
+    <button class="start-button" id="startButton">
+      게임 시작
+    </button>
+
+    <div class="stats">
+      <div class="stat">
+        <small>이번 기록</small>
+        <strong id="currentScore">-</strong>
+      </div>
+      <div class="stat">
+        <small>최고 기록</small>
+        <strong id="bestScore">-</strong>
+      </div>
+    </div>
+
+    <a class="back" href="../index.html">← 카지노 메인으로</a>
+  </main>
+
+  <script>
+    const screen = document.getElementById("screen");
+    const message = document.getElementById("message");
+    const subMessage = document.getElementById("subMessage");
+    const startButton = document.getElementById("startButton");
+    const currentScore = document.getElementById("currentScore");
+    const bestScore = document.getElementById("bestScore");
+
+    let state = "idle";
+    let readyTime = 0;
+    let timeoutId = null;
+    let best = null;
+
+    try {
+      best = Number(localStorage.getItem("reactionBest")) || null;
+    } catch (error) {
+      best = null;
+    }
+
+    function updateBest() {
+      bestScore.textContent = best === null ? "-" : best + " ms";
+    }
+
+    function startGame() {
+      clearTimeout(timeoutId);
+
+      state = "waiting";
+      screen.className = "screen waiting";
+      message.textContent = "기다리세요!";
+      subMessage.textContent = "초록색으로 바뀌기 전에는 누르지 마세요.";
+      currentScore.textContent = "-";
+      startButton.disabled = true;
+      startButton.textContent = "진행 중...";
+
+      const delay = 1500 + Math.random() * 2500;
+
+      timeoutId = setTimeout(() => {
+        state = "ready";
+        readyTime = performance.now();
+
+        screen.className = "screen ready";
+        message.textContent = "지금 누르세요!";
+        subMessage.textContent = "화면을 최대한 빠르게 터치하세요!";
+      }, delay);
+    }
+
+    function react() {
+      if (state === "waiting") {
+        clearTimeout(timeoutId);
+
+        state = "idle";
+        screen.className = "screen result";
+        message.textContent = "너무 빨랐어요!";
+        subMessage.textContent = "초록색으로 바뀐 뒤에 눌러야 합니다.";
+        startButton.disabled = false;
+        startButton.textContent = "다시 도전";
+        return;
+      }
+
+      if (state === "ready") {
+        const reaction = Math.round(performance.now() - readyTime);
+
+        state = "idle";
+        screen.className = "screen result";
+        message.textContent = reaction + " ms";
+        subMessage.textContent = "반응속도 측정 완료!";
+
+        currentScore.textContent = reaction + " ms";
+
+        if (best === null || reaction < best) {
+          best = reaction;
+
+          try {
+            localStorage.setItem("reactionBest", String(best));
+          } catch (error) {
+            // 저장이 제한된 환경에서는 현재 기록만 표시합니다.
+          }
+
+          subMessage.textContent = "새로운 최고 기록입니다!";
+        }
+
+        updateBest();
+        startButton.disabled = false;
+        startButton.textContent = "다시 도전";
+      }
+    }
+
+    startButton.addEventListener("click", startGame);
+    screen.addEventListener("pointerdown", react);
+
+    updateBest();
+  </script>
+</body>
+</html>
