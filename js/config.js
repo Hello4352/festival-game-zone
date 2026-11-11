@@ -6,8 +6,8 @@ const SITE_CONFIG = {
 
   descriptionCards: [
     {
-      title: "게임 설명 1",
-      description: "첫 번째 게임의 설명을 입력하세요."
+      title: "2048",
+      description: "2048을 만들어라!"
     },
     {
       title: "게임 설명 2",
