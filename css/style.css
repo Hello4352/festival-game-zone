@@ -13,6 +13,11 @@
   --muted: #aebbd0;
 }
 
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -38,6 +43,8 @@ a {
   background: rgba(9, 17, 31, 0.55);
 }
 
+/* 상단 타이틀 */
+
 .hero {
   max-width: 620px;
   margin: 0 auto 54px;
@@ -61,6 +68,7 @@ a {
 
 .hero h1 {
   margin: 20px 0 12px;
+  color: var(--text);
   font-size: clamp(38px, 7vw, 62px);
   letter-spacing: 5px;
 }
@@ -70,6 +78,8 @@ a {
   color: var(--muted);
   font-size: clamp(15px, 3vw, 21px);
 }
+
+/* 게임 설명 */
 
 .guide-section {
   margin-bottom: 42px;
@@ -83,12 +93,14 @@ a {
 .guide-section h2,
 .games-heading h2 {
   margin: 12px 0;
+  color: var(--text);
   font-size: 30px;
 }
 
 .section-description {
   margin: 0 0 24px;
   color: var(--muted);
+  line-height: 1.6;
 }
 
 .description-grid {
@@ -124,8 +136,11 @@ a {
 }
 
 .description-card strong {
+  color: var(--text);
   font-size: 16px;
 }
+
+/* 미니게임 영역 */
 
 .games-section {
   margin: 0 0 34px;
@@ -176,6 +191,7 @@ a {
 
 .mini-game-button span {
   display: block;
+  color: var(--text);
   font-size: 19px;
   font-weight: bold;
 }
@@ -186,6 +202,19 @@ a {
   color: var(--muted);
   font-size: 13px;
 }
+
+.mini-game-button.available {
+  border-color: var(--gold);
+  background: linear-gradient(145deg, #263954, #17263b);
+}
+
+.mini-game-button.available small {
+  color: var(--gold);
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* 로또 버튼 */
 
 .lotto-link {
   display: flex;
@@ -217,6 +246,7 @@ a {
 .lotto-info strong {
   display: block;
   margin-bottom: 8px;
+  color: var(--text);
   font-size: 25px;
 }
 
@@ -231,6 +261,8 @@ a {
   font-size: 42px;
 }
 
+/* 하단 */
+
 footer {
   margin-top: 42px;
   color: #77869c;
@@ -239,7 +271,7 @@ footer {
   text-align: center;
 }
 
-/* 설명 팝업 */
+/* 팝업 */
 
 .modal {
   position: fixed;
@@ -268,6 +300,7 @@ footer {
 
 .modal-card h2 {
   margin: 22px 0;
+  color: var(--text);
   font-size: 32px;
 }
 
@@ -296,6 +329,8 @@ footer {
 .close-button:hover {
   background: #8b642b;
 }
+
+/* 모바일 화면 */
 
 @media (max-width: 650px) {
   body {
