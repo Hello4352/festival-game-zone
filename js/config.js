@@ -29,6 +29,8 @@ const SITE_CONFIG = {
     "반응속도 테스트",
     "오목",
     "Snake",
-    "Neon Shooter"
+    "Neon Shooter",
+    "Chess AI",
+    "테트리스"
   ]
 };
