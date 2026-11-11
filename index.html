@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101a2b">
+  <title>게임 부스</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="home-shell">
+    <header class="home-header">
+      <p class="eyebrow">FESTIVAL GAME ZONE</p>
+      <h1 id="siteTitle">게임 부스</h1>
+      <p id="siteSubtitle" class="site-subtitle">원하는 게임을 선택해 도전해 보세요!</p>
+    </header>
+
+    <section class="description-section" aria-labelledby="descriptionHeading">
+      <div class="section-heading">
+        <span class="section-kicker">GAME GUIDE</span>
+        <h2 id="descriptionHeading">게임 설명</h2>
+        <p>버튼을 누르면 각 게임의 설명을 확인할 수 있어요.</p>
+      </div>
+      <div id="descriptionGrid" class="description-grid">
+        <!-- js/config.js의 설명 4개가 이곳에 표시됩니다. -->
+      </div>
+    </section>
+
+    <button id="productButton" class="wide-button product-button" type="button">
+      <span class="wide-button-icon" aria-hidden="true">🎁</span>
+      <span class="wide-button-copy">
+        <strong id="productButtonTitle">상품 안내</strong>
+        <small>준비된 상품을 확인해 보세요.</small>
+      </span>
+      <span class="wide-button-arrow" aria-hidden="true">›</span>
+    </button>
+
+    <section class="mini-section" aria-labelledby="miniHeading">
+      <div class="mini-heading-row">
+        <div>
+          <span class="section-kicker">MINI GAMES</span>
+          <h2 id="miniHeading">미니게임</h2>
+        </div>
+        <span class="coming-soon">GAME ZONE</span>
+      </div>
+      <div id="miniGameGrid" class="mini-game-grid">
+        <!-- 미니게임 버튼은 설정 파일의 이름으로 표시됩니다. -->
+      </div>
+    </section>
+
+    <a class="wide-button lotto-button" href="lotto.html">
+      <span class="wide-button-icon" aria-hidden="true">🎱</span>
+      <span class="wide-button-copy">
+        <strong>로또 추첨</strong>
+        <small>1부터 45까지, 행운의 번호 6개를 뽑아보세요.</small>
+      </span>
+      <span class="wide-button-arrow" aria-hidden="true">›</span>
+    </a>
+
+    <footer id="siteFooter" class="home-footer">ENJOY THE FESTIVAL</footer>
+  </main>
+
+  <div id="infoModal" class="modal" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <span class="modal-label">GAME INFORMATION</span>
+      <h2 id="modalTitle">안내</h2>
+      <p id="modalDescription" class="modal-description"></p>
+      <button id="modalClose" class="modal-close" type="button">닫기</button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

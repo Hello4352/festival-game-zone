@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0e18">
+  <title>THE FINAL DRAW</title>
+  <link rel="stylesheet" href="css/lotto.css">
+</head>
+<body>
+  <canvas id="fireworks" aria-hidden="true"></canvas>
+
+  <main class="lotto-stage">
+    <header class="lotto-header">
+      <a class="home-link" href="index.html">← 메인 화면</a>
+      <div class="lotto-logo">★ LUCKY LOTTO ★</div>
+      <span class="header-spacer" aria-hidden="true"></span>
+    </header>
+
+    <section class="lotto-main">
+      <div id="lottoEyebrow" class="lotto-eyebrow"></div>
+      <h1 id="lottoTitle"></h1>
+      <p id="lottoSubtitle" class="lotto-subtitle"></p>
+
+      <div id="countdown" class="countdown" aria-live="polite"></div>
+
+      <div id="balls" class="balls" aria-label="추첨 번호 6개">
+        <div class="ball">?</div><div class="ball">?</div><div class="ball">?</div>
+        <div class="ball">?</div><div class="ball">?</div><div class="ball">?</div>
+      </div>
+
+      <p id="status" class="status" aria-live="polite">추첨을 시작해 주세요.</p>
+      <button id="startButton" class="start-button" type="button"></button>
+
+      <section id="resultSummary" class="result-summary" hidden aria-live="polite">
+        <p class="result-label">YOUR LUCKY NUMBERS</p>
+        <h2>이번 추첨 결과</h2>
+        <div id="summaryBalls" class="summary-balls"></div>
+      </section>
+    </section>
+
+    <footer id="lottoFooter" class="lotto-footer"></footer>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/lotto.js"></script>
+</body>
+</html>
