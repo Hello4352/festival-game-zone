@@ -1,0 +1,418 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CASINO - 2048</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0b1220;
+  color: #f8e8b8;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 48px;
+  letter-spacing: 8px;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  color: #b8c2d4;
+  margin-bottom: 25px;
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.score-box {
+  flex: 1;
+  background: #1c2a40;
+  border: 1px solid #a68b53;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.score-box span {
+  display: block;
+  color: #c4b58f;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.score-box strong {
+  font-size: 22px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  background: #26344a;
+  border: 2px solid #a68b53;
+  border-radius: 15px;
+  padding: 10px;
+  touch-action: none;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border-radius: 9px;
+  background: #3b4658;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: clamp(20px, 7vw, 34px);
+  font-weight: bold;
+  color: #293044;
+}
+
+.v2 { background: #eee4d8; }
+.v4 { background: #eee0c4; }
+.v8 { background: #e9b66c; color: white; }
+.v16 { background: #e99b55; color: white; }
+.v32 { background: #e67c52; color: white; }
+.v64 { background: #df5c3f; color: white; }
+.v128 { background: #e8ce68; }
+.v256 { background: #e8c44d; }
+.v512 { background: #e6b832; }
+.v1024 { background: #e6a91d; }
+.v2048 { background: #f5ca70; color: #563b14; }
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, 65px);
+  justify-content: center;
+  gap: 8px;
+  margin: 20px auto;
+}
+
+.controls button,
+.action {
+  border: 1px solid #a68b53;
+  background: #263954;
+  color: #f8e8b8;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.controls button:active,
+.action:active {
+  background: #8a652b;
+}
+
+.up { grid-column: 2; }
+.left { grid-column: 1; }
+.down { grid-column: 2; }
+.right { grid-column: 3; }
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action {
+  font-size: 15px;
+}
+
+.message {
+  min-height: 25px;
+  margin: 15px 0;
+  color: #f5ca70;
+  font-weight: bold;
+}
+
+.back {
+  display: inline-block;
+  margin-top: 22px;
+  color: #c4b58f;
+  text-decoration: none;
+}
+
+@media (max-width: 380px) {
+  .board { gap: 6px; padding: 7px; }
+  .cell { font-size: 22px; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>2048</h1>
+  <div class="subtitle">CASINO MINI GAME</div>
+
+  <div class="info">
+    <div class="score-box">
+      <span>SCORE</span>
+      <strong id="score">0</strong>
+    </div>
+    <div class="score-box">
+      <span>BEST</span>
+      <strong id="best">0</strong>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="message" id="message">
+    같은 숫자를 합쳐 2048을 만들어 보세요!
+  </div>
+
+  <div class="controls">
+    <button class="up" data-dir="up">▲</button>
+    <button class="left" data-dir="left">◀</button>
+    <button class="down" data-dir="down">▼</button>
+    <button class="right" data-dir="right">▶</button>
+  </div>
+
+  <div class="actions">
+    <button class="action" id="restart">새 게임</button>
+    <button class="action" id="undo">한 수 되돌리기</button>
+  </div>
+
+  <a class="back" href="../index.html">← 카지노 메인으로</a>
+</div>
+
+<script>
+const boardElement = document.getElementById("board");
+const scoreElement = document.getElementById("score");
+const bestElement = document.getElementById("best");
+const messageElement = document.getElementById("message");
+
+let board;
+let score;
+let best = 0;
+let previous = null;
+let gameOver = false;
+
+try {
+  best = Number(localStorage.getItem("casino2048Best")) || 0;
+} catch (e) {}
+
+function newGame() {
+  board = Array.from({length: 4}, () => Array(4).fill(0));
+  score = 0;
+  previous = null;
+  gameOver = false;
+  messageElement.textContent = "같은 숫자를 합쳐 2048을 만들어 보세요!";
+  addTile();
+  addTile();
+  render();
+}
+
+function addTile() {
+  const empty = [];
+
+  board.forEach((row, r) => {
+    row.forEach((value, c) => {
+      if (value === 0) empty.push([r, c]);
+    });
+  });
+
+  if (!empty.length) return;
+
+  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+  board[r][c] = Math.random() < 0.9 ? 2 : 4;
+}
+
+function render() {
+  boardElement.innerHTML = "";
+
+  board.flat().forEach(value => {
+    const cell = document.createElement("div");
+    cell.className = "cell" + (value ? " v" + value : "");
+    cell.textContent = value || "";
+    boardElement.appendChild(cell);
+  });
+
+  scoreElement.textContent = score;
+  bestElement.textContent = best;
+}
+
+function slide(line) {
+  let values = line.filter(v => v !== 0);
+  let result = [];
+  let gained = 0;
+
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] === values[i + 1]) {
+      const merged = values[i] * 2;
+      result.push(merged);
+      gained += merged;
+      i++;
+    } else {
+      result.push(values[i]);
+    }
+  }
+
+  while (result.length < 4) result.push(0);
+
+  return {result, gained};
+}
+
+function move(direction) {
+  if (gameOver) return;
+
+  const before = board.map(row => [...row]);
+  let gained = 0;
+
+  for (let i = 0; i < 4; i++) {
+    let line;
+
+    if (direction === "left" || direction === "right") {
+      line = [...board[i]];
+    } else {
+      line = board.map(row => row[i]);
+    }
+
+    if (direction === "right" || direction === "down") {
+      line.reverse();
+    }
+
+    const result = slide(line);
+
+    if (direction === "right" || direction === "down") {
+      result.result.reverse();
+    }
+
+    gained += result.gained;
+
+    if (direction === "left" || direction === "right") {
+      board[i] = result.result;
+    } else {
+      for (let r = 0; r < 4; r++) {
+        board[r][i] = result.result[r];
+      }
+    }
+  }
+
+  const changed = board.some((row, r) =>
+    row.some((value, c) => value !== before[r][c])
+  );
+
+  if (!changed) return;
+
+  previous = {
+    board: before,
+    score: score
+  };
+
+  score += gained;
+
+  if (score > best) {
+    best = score;
+    try {
+      localStorage.setItem("casino2048Best", best);
+    } catch (e) {}
+  }
+
+  addTile();
+  render();
+
+  if (board.flat().includes(2048)) {
+    messageElement.textContent = "축하합니다! 2048 달성!";
+  }
+
+  if (!canMove()) {
+    gameOver = true;
+    messageElement.textContent = "게임 종료! 새 게임을 눌러 다시 도전하세요.";
+  }
+}
+
+function canMove() {
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      if (board[r][c] === 0) return true;
+
+      if (c < 3 && board[r][c] === board[r][c + 1]) return true;
+      if (r < 3 && board[r][c] === board[r + 1][c]) return true;
+    }
+  }
+
+  return false;
+}
+
+function undo() {
+  if (!previous) return;
+
+  board = previous.board;
+  score = previous.score;
+  previous = null;
+  gameOver = false;
+  messageElement.textContent = "이전 상태로 되돌렸습니다.";
+  render();
+}
+
+document.addEventListener("keydown", event => {
+  const keys = {
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right"
+  };
+
+  if (keys[event.key]) {
+    event.preventDefault();
+    move(keys[event.key]);
+  }
+});
+
+document.querySelectorAll("[data-dir]").forEach(button => {
+  button.addEventListener("click", () => move(button.dataset.dir));
+});
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+boardElement.addEventListener("touchstart", event => {
+  touchStartX = event.changedTouches[0].clientX;
+  touchStartY = event.changedTouches[0].clientY;
+}, {passive: true});
+
+boardElement.addEventListener("touchend", event => {
+  const dx = event.changedTouches[0].clientX - touchStartX;
+  const dy = event.changedTouches[0].clientY - touchStartY;
+
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 25) return;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    move(dx > 0 ? "right" : "left");
+  } else {
+    move(dy > 0 ? "down" : "up");
+  }
+}, {passive: true});
+
+document.getElementById("restart").addEventListener("click", newGame);
+document.getElementById("undo").addEventListener("click", undo);
+
+newGame();
+</script>
+</body>
+</html>
