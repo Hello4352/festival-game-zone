@@ -10,10 +10,22 @@
   const descriptionGrid = byId("descriptionGrid");
   const miniGameGrid = byId("miniGameGrid");
 
-  // 설정 내용 표시
+  // 메인 화면 설정
   byId("siteTitle").textContent = SITE_CONFIG.siteTitle;
   byId("siteSubtitle").textContent = SITE_CONFIG.siteSubtitle;
   byId("siteFooter").textContent = SITE_CONFIG.siteFooter;
+
+  // 게임별 페이지 연결
+  const gameLinks = [
+    "games/2048.html",
+    "games/brick-breaker.html",
+    "games/coming-soon.html?game=반응속도%20테스트",
+    "games/coming-soon.html?game=오목",
+    "games/coming-soon.html?game=Snake",
+    "games/coming-soon.html?game=Neon%20Shooter",
+    "games/coming-soon.html?game=Chess%20AI",
+    "games/coming-soon.html?game=테트리스"
+  ];
 
   // 설명 팝업 열기
   function openInfo(title, description) {
@@ -34,7 +46,6 @@
   // 게임 설명 버튼 4개 생성
   SITE_CONFIG.descriptionCards.slice(0, 4).forEach((item, index) => {
     const button = document.createElement("button");
-
     button.type = "button";
     button.className = "description-card";
 
@@ -57,10 +68,9 @@
     descriptionGrid.appendChild(button);
   });
 
-  // 미니게임 버튼 6개 생성
-  SITE_CONFIG.miniGames.slice(0, 6).forEach((name, index) => {
+  // 미니게임 버튼 8개 생성
+  SITE_CONFIG.miniGames.slice(0, 8).forEach((name, index) => {
     const button = document.createElement("button");
-
     button.type = "button";
     button.className = "mini-game-button";
 
@@ -69,25 +79,21 @@
 
     const status = document.createElement("small");
 
-    if (index === 0) {
-      status.textContent = "PLAY NOW";
+    // 현재 실제 게임이 만들어진 항목
+    const isAvailable = index < 2;
+
+    status.textContent = isAvailable
+      ? "PLAY NOW"
+      : "준비 중";
+
+    if (isAvailable) {
       button.classList.add("available");
-    } else {
-      status.textContent = "준비 중";
     }
 
     button.append(title, status);
 
     button.addEventListener("click", () => {
-      if (index === 0) {
-        window.location.href = "games/2048.html";
-        return;
-      }
-
-      openInfo(
-        name || `미니게임 ${index + 1}`,
-        "이 미니게임은 아직 준비 중입니다."
-      );
+      window.location.href = gameLinks[index];
     });
 
     miniGameGrid.appendChild(button);
