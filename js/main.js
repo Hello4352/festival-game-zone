@@ -57,7 +57,7 @@
     descriptionGrid.appendChild(button);
   });
 
-  // 미니게임 버튼 생성
+  // 미니게임 버튼 6개 생성
   SITE_CONFIG.miniGames.slice(0, 6).forEach((name, index) => {
     const button = document.createElement("button");
 
@@ -69,7 +69,6 @@
 
     const status = document.createElement("small");
 
-    // 첫 번째 게임은 2048로 연결
     if (index === 0) {
       status.textContent = "PLAY NOW";
       button.classList.add("available");
