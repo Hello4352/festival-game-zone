@@ -23,7 +23,7 @@
     "games/omok.html",
     "games/Snake.html",
     "games/neon-shooter.html",
-    "games/coming-soon.html?game=Chess%20AI",
+    "games/chess.html",
     "games/coming-soon.html?game=테트리스"
   ];
 
