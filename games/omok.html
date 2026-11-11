@@ -1,0 +1,308 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <title>오목 | 카지노</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0b1220;
+      color: #f5f0df;
+      font-family: Arial, sans-serif;
+    }
+
+    .game {
+      width: 100%;
+      max-width: 650px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #e9c76b;
+      margin-bottom: 8px;
+    }
+
+    .description {
+      color: #b8c0ce;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .status {
+      padding: 14px;
+      margin-bottom: 15px;
+      border: 1px solid #d6ad4c;
+      border-radius: 12px;
+      background: #17243a;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    .board-wrap {
+      width: 100%;
+      padding: 8px;
+      border-radius: 12px;
+      background: #c99b52;
+      box-shadow: 0 8px 25px #0008;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 5px;
+      touch-action: manipulation;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      flex: 1;
+      padding: 14px;
+      border: 0;
+      border-radius: 10px;
+      background: #e9c76b;
+      color: #172033;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 22px;
+      color: #e9c76b;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>오목</h1>
+    <p class="description">
+      흑돌과 백돌을 번갈아 놓으세요.<br>
+      먼저 5개의 돌을 연결하면 승리합니다!
+    </p>
+
+    <div class="status" id="status">흑돌 차례 ●</div>
+
+    <div class="board-wrap">
+      <canvas id="board" width="600" height="600"></canvas>
+    </div>
+
+    <div class="buttons">
+      <button id="restart">새 게임</button>
+    </div>
+
+    <a class="back" href="../index.html">← 카지노 메인으로</a>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+    const statusText = document.getElementById("status");
+    const restartButton = document.getElementById("restart");
+
+    const SIZE = 15;
+    const CELL = 40;
+    const MARGIN = 20;
+
+    let board = [];
+    let turn = 1;
+    let gameOver = false;
+
+    function resetGame() {
+      board = Array.from(
+        { length: SIZE },
+        () => Array(SIZE).fill(0)
+      );
+
+      turn = 1;
+      gameOver = false;
+
+      statusText.textContent = "흑돌 차례 ●";
+      drawBoard();
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, 600, 600);
+
+      ctx.fillStyle = "#d9ad68";
+      ctx.fillRect(0, 0, 600, 600);
+
+      ctx.strokeStyle = "#593b20";
+      ctx.lineWidth = 1.4;
+
+      for (let i = 0; i < SIZE; i++) {
+        const pos = MARGIN + i * CELL;
+
+        ctx.beginPath();
+        ctx.moveTo(MARGIN, pos);
+        ctx.lineTo(MARGIN + (SIZE - 1) * CELL, pos);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(pos, MARGIN);
+        ctx.lineTo(pos, MARGIN + (SIZE - 1) * CELL);
+        ctx.stroke();
+      }
+
+      // 화점
+      const stars = [3, 7, 11];
+
+      stars.forEach(x => {
+        stars.forEach(y => {
+          ctx.beginPath();
+          ctx.arc(
+            MARGIN + x * CELL,
+            MARGIN + y * CELL,
+            3,
+            0,
+            Math.PI * 2
+          );
+          ctx.fillStyle = "#593b20";
+          ctx.fill();
+        });
+      });
+
+      // 돌 그리기
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          if (board[y][x] !== 0) {
+            drawStone(x, y, board[y][x]);
+          }
+        }
+      }
+    }
+
+    function drawStone(x, y, color) {
+      const px = MARGIN + x * CELL;
+      const py = MARGIN + y * CELL;
+
+      const gradient = ctx.createRadialGradient(
+        px - 7, py - 8, 2,
+        px, py, 16
+      );
+
+      if (color === 1) {
+        gradient.addColorStop(0, "#666");
+        gradient.addColorStop(1, "#050505");
+      } else {
+        gradient.addColorStop(0, "#fff");
+        gradient.addColorStop(1, "#c9c9c9");
+      }
+
+      ctx.beginPath();
+      ctx.arc(px, py, 16, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.strokeStyle = color === 1 ? "#000" : "#999";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    function checkWin(x, y, color) {
+      const directions = [
+        [1, 0],
+        [0, 1],
+        [1, 1],
+        [1, -1]
+      ];
+
+      for (const [dx, dy] of directions) {
+        let count = 1;
+
+        for (const sign of [1, -1]) {
+          let nx = x + dx * sign;
+          let ny = y + dy * sign;
+
+          while (
+            nx >= 0 && nx < SIZE &&
+            ny >= 0 && ny < SIZE &&
+            board[ny][nx] === color
+          ) {
+            count++;
+            nx += dx * sign;
+            ny += dy * sign;
+          }
+        }
+
+        if (count >= 5) return true;
+      }
+
+      return false;
+    }
+
+    function handleBoardClick(event) {
+      if (gameOver) return;
+
+      const rect = canvas.getBoundingClientRect();
+
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      const px = (event.clientX - rect.left) * scaleX;
+      const py = (event.clientY - rect.top) * scaleY;
+
+      const x = Math.round((px - MARGIN) / CELL);
+      const y = Math.round((py - MARGIN) / CELL);
+
+      if (
+        x < 0 || x >= SIZE ||
+        y < 0 || y >= SIZE ||
+        board[y][x] !== 0
+      ) {
+        return;
+      }
+
+      board[y][x] = turn;
+      drawBoard();
+
+      if (checkWin(x, y, turn)) {
+        gameOver = true;
+        statusText.textContent =
+          turn === 1 ? "흑돌 승리! ●" : "백돌 승리! ○";
+        return;
+      }
+
+      const isDraw = board.every(row =>
+        row.every(cell => cell !== 0)
+      );
+
+      if (isDraw) {
+        gameOver = true;
+        statusText.textContent = "무승부!";
+        return;
+      }
+
+      turn = turn === 1 ? 2 : 1;
+      statusText.textContent =
+        turn === 1 ? "흑돌 차례 ●" : "백돌 차례 ○";
+    }
+
+    canvas.addEventListener("pointerdown", handleBoardClick);
+    restartButton.addEventListener("click", resetGame);
+
+    resetGame();
+  </script>
+</body>
+</html>
