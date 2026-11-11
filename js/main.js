@@ -20,8 +20,8 @@
     "games/2048.html",
     "games/brick-breaker.html",
     "games/reaction.html",
-    "games/coming-soon.html?game=오목",
-    "games/coming-soon.html?game=Snake",
+    "games/omok",
+    "games/Snake",
     "games/coming-soon.html?game=Neon%20Shooter",
     "games/coming-soon.html?game=Chess%20AI",
     "games/coming-soon.html?game=테트리스"
