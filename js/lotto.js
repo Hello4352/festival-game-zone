@@ -11,24 +11,126 @@
   const summaryBalls = $("summaryBalls");
 
   let isDrawing = false;
+  let audioContext = null;
 
-  // 드럼 롤 효과음 설정
+  // 두구두구 효과음
   const drumRoll = new Audio("sounds/drum-roll.mp3");
   drumRoll.preload = "auto";
   drumRoll.loop = true;
 
+  // 오디오 실행 환경 준비
+  function prepareAudio() {
+    const AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+    }
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume().catch((error) => {
+        console.warn("오디오 실행 오류:", error);
+      });
+    }
+  }
+
+  // 두구두구 재생
   function playDrumRoll() {
     drumRoll.pause();
     drumRoll.currentTime = 0;
 
     drumRoll.play().catch((error) => {
-      console.warn("효과음을 재생할 수 없습니다:", error);
+      console.warn("두구두구 효과음 재생 오류:", error);
     });
   }
 
+  // 두구두구 정지
   function stopDrumRoll() {
     drumRoll.pause();
     drumRoll.currentTime = 0;
+  }
+
+  // 마지막 공이 나올 때 쾅 소리
+  function playBoom() {
+    if (!audioContext) return;
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    const now = audioContext.currentTime;
+
+    // 저음 충격음
+    const oscillator = audioContext.createOscillator();
+    const oscillatorGain = audioContext.createGain();
+
+    oscillator.type = "sine";
+
+    oscillator.frequency.setValueAtTime(110, now);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      38,
+      now + 0.45
+    );
+
+    oscillatorGain.gain.setValueAtTime(0.001, now);
+    oscillatorGain.gain.exponentialRampToValueAtTime(
+      0.9,
+      now + 0.015
+    );
+    oscillatorGain.gain.exponentialRampToValueAtTime(
+      0.001,
+      now + 0.7
+    );
+
+    oscillator.connect(oscillatorGain);
+    oscillatorGain.connect(audioContext.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.72);
+
+    // 짧은 타격 노이즈
+    const bufferSize = Math.floor(
+      audioContext.sampleRate * 0.25
+    );
+
+    const noiseBuffer = audioContext.createBuffer(
+      1,
+      bufferSize,
+      audioContext.sampleRate
+    );
+
+    const noiseData = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      noiseData[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = audioContext.createBufferSource();
+    const filter = audioContext.createBiquadFilter();
+    const noiseGain = audioContext.createGain();
+
+    noise.buffer = noiseBuffer;
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(900, now);
+
+    noiseGain.gain.setValueAtTime(0.001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(
+      0.45,
+      now + 0.01
+    );
+    noiseGain.gain.exponentialRampToValueAtTime(
+      0.001,
+      now + 0.22
+    );
+
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(audioContext.destination);
+
+    noise.start(now);
+    noise.stop(now + 0.25);
   }
 
   $("lottoEyebrow").textContent = LOTTO_CONFIG.eyebrow;
@@ -116,12 +218,13 @@
     startButton.disabled = true;
     startButton.textContent = "추첨 진행 중...";
 
+    // 버튼을 누른 순간 오디오 환경 준비
+    prepareAudio();
+    stopDrumRoll();
+
     resetScreen();
 
     const selectedNumbers = drawSixNumbers();
-
-    // 추첨 시작과 동시에 효과음 재생
-    playDrumRoll();
 
     const spinTimer = window.setInterval(() => {
       balls.forEach((ball) => {
@@ -136,6 +239,7 @@
     }, 110);
 
     try {
+      // 3, 2, 1 카운트다운: 소리 없음
       for (
         let seconds = LOTTO_CONFIG.countdownSeconds;
         seconds > 0;
@@ -148,9 +252,13 @@
         await wait(1000);
       }
 
+      // 카운트다운이 끝난 직후 두구두구 시작
       countdownText.textContent = "START!";
       statusText.textContent = LOTTO_CONFIG.drawingText;
 
+      playDrumRoll();
+
+      // 번호 순차 공개
       for (let i = 0; i < selectedNumbers.length; i++) {
         if (i === selectedNumbers.length - 1) {
           statusText.textContent =
@@ -164,15 +272,17 @@
 
         await wait(LOTTO_CONFIG.revealInterval);
 
+        // 공이 공개되는 순간
         revealNumber(
           balls[i],
           selectedNumbers[i],
           i === selectedNumbers.length - 1
         );
 
-        // 마지막 번호가 공개되면 효과음 정지
+        // 마지막 공이 공개되면 두구두구 정지 후 쾅!
         if (i === selectedNumbers.length - 1) {
           stopDrumRoll();
+          playBoom();
         }
 
         await wait(350);
