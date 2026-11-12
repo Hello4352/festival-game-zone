@@ -12,6 +12,25 @@
 
   let isDrawing = false;
 
+  // 드럼 롤 효과음 설정
+  const drumRoll = new Audio("sounds/drum-roll.mp3");
+  drumRoll.preload = "auto";
+  drumRoll.loop = true;
+
+  function playDrumRoll() {
+    drumRoll.pause();
+    drumRoll.currentTime = 0;
+
+    drumRoll.play().catch((error) => {
+      console.warn("효과음을 재생할 수 없습니다:", error);
+    });
+  }
+
+  function stopDrumRoll() {
+    drumRoll.pause();
+    drumRoll.currentTime = 0;
+  }
+
   $("lottoEyebrow").textContent = LOTTO_CONFIG.eyebrow;
   $("lottoTitle").textContent = LOTTO_CONFIG.title;
   $("lottoSubtitle").textContent = LOTTO_CONFIG.subtitle;
@@ -101,6 +120,9 @@
 
     const selectedNumbers = drawSixNumbers();
 
+    // 추첨 시작과 동시에 효과음 재생
+    playDrumRoll();
+
     const spinTimer = window.setInterval(() => {
       balls.forEach((ball) => {
         if (!ball.classList.contains("revealed")) {
@@ -148,6 +170,11 @@
           i === selectedNumbers.length - 1
         );
 
+        // 마지막 번호가 공개되면 효과음 정지
+        if (i === selectedNumbers.length - 1) {
+          stopDrumRoll();
+        }
+
         await wait(350);
       }
 
@@ -167,6 +194,7 @@
       startButton.textContent = LOTTO_CONFIG.startText;
 
     } finally {
+      stopDrumRoll();
       window.clearInterval(spinTimer);
       startButton.disabled = false;
       isDrawing = false;
