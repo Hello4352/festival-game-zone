@@ -3,6 +3,7 @@
   "use strict";
 
   const $ = (id) => document.getElementById(id);
+
   const balls = Array.from(document.querySelectorAll(".ball"));
   const startButton = $("startButton");
   const statusText = $("status");
@@ -11,414 +12,325 @@
   const summaryBalls = $("summaryBalls");
 
   let isDrawing = false;
+  let drumAudio = null;
   let audioContext = null;
 
-  // 두구두구 효과음
-  const drumRoll = new Audio("sounds/drum-roll.mp3");
-  drumRoll.preload = "auto";
-  drumRoll.loop = true;
+  const LOTTO_CONFIG = {
+    countdownSeconds: 3,
+    spinInterval: 110,
+    revealInterval: 2800,
+    lastNumberPause: 2800,
+    afterRevealDelay: 350,
+    minNumber: 1,
+    maxNumber: 45
+  };
 
-  // 오디오 실행 환경 준비
+  // 화면 기본 문구
+  if ($("lottoEyebrow")) {
+    $("lottoEyebrow").textContent = "LOTTO DRAW";
+  }
+
+  if ($("lottoTitle")) {
+    $("lottoTitle").textContent = "LOTTO";
+  }
+
+  if ($("lottoSubtitle")) {
+    $("lottoSubtitle").textContent = "행운의 번호를 추첨합니다.";
+  }
+
+  if ($("lottoFooter")) {
+    $("lottoFooter").textContent = "GOOD LUCK!";
+  }
+
+  // 드럼롤 오디오 준비
   function prepareAudio() {
-    const AudioContextClass =
-      window.AudioContext || window.webkitAudioContext;
-
-    if (!AudioContextClass) return;
-
-    if (!audioContext) {
-      audioContext = new AudioContextClass();
+    if (!drumAudio) {
+      drumAudio = new Audio("sounds/drum-roll.mp3");
+      drumAudio.loop = true;
+      drumAudio.volume = 1;
+      drumAudio.preload = "auto";
     }
 
-    if (audioContext.state === "suspended") {
-      audioContext.resume().catch((error) => {
-        console.warn("오디오 실행 오류:", error);
-      });
+    if (!audioContext) {
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
+
+      if (AudioContextClass) {
+        audioContext = new AudioContextClass();
+      }
     }
   }
 
-  // 두구두구 재생
+  // 드럼롤 시작
   function playDrumRoll() {
-    drumRoll.pause();
-    drumRoll.currentTime = 0;
+    if (!drumAudio) return;
 
-    drumRoll.play().catch((error) => {
-      console.warn("두구두구 효과음 재생 오류:", error);
+    drumAudio.currentTime = 0;
+    drumAudio.volume = 1;
+
+    drumAudio.play().catch((error) => {
+      console.warn("드럼롤 재생 실패:", error);
     });
   }
 
-  // 두구두구 정지
+  // 드럼롤 정지
   function stopDrumRoll() {
-    drumRoll.pause();
-    drumRoll.currentTime = 0;
+    if (!drumAudio) return;
+
+    drumAudio.pause();
+    drumAudio.currentTime = 0;
   }
 
-  // 마지막 공이 나올 때 쾅 소리
+  // 마지막 공에서 재생할 강한 쾅 소리
   function playBoom() {
     if (!audioContext) return;
 
-    if (audioContext.state === "suspended") {
-      audioContext.resume();
+    const ctx = audioContext;
+
+    if (ctx.state === "suspended") {
+      ctx.resume();
     }
 
-    const now = audioContext.currentTime;
+    const now = ctx.currentTime;
 
     // 저음 충격음
-    const oscillator = audioContext.createOscillator();
-    const oscillatorGain = audioContext.createGain();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
 
     oscillator.type = "sine";
 
-    oscillator.frequency.setValueAtTime(110, now);
+    oscillator.frequency.setValueAtTime(100, now);
     oscillator.frequency.exponentialRampToValueAtTime(
-      38,
-      now + 0.45
+      25,
+      now + 0.65
     );
 
-    oscillatorGain.gain.setValueAtTime(0.001, now);
-    oscillatorGain.gain.exponentialRampToValueAtTime(
-      0.9,
-      now + 0.015
-    );
-    oscillatorGain.gain.exponentialRampToValueAtTime(
+    gain.gain.setValueAtTime(1.0, now);
+    gain.gain.exponentialRampToValueAtTime(
       0.001,
-      now + 0.7
+      now + 0.75
     );
 
-    oscillator.connect(oscillatorGain);
-    oscillatorGain.connect(audioContext.destination);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
 
     oscillator.start(now);
-    oscillator.stop(now + 0.72);
+    oscillator.stop(now + 0.8);
 
-    // 짧은 타격 노이즈
-    const bufferSize = Math.floor(
-      audioContext.sampleRate * 0.25
-    );
-
-    const noiseBuffer = audioContext.createBuffer(
+    // 충격음에 노이즈 추가
+    const bufferSize = ctx.sampleRate * 0.45;
+    const buffer = ctx.createBuffer(
       1,
       bufferSize,
-      audioContext.sampleRate
+      ctx.sampleRate
     );
 
-    const noiseData = noiseBuffer.getChannelData(0);
+    const data = buffer.getChannelData(0);
 
     for (let i = 0; i < bufferSize; i++) {
-      noiseData[i] = Math.random() * 2 - 1;
+      data[i] = Math.random() * 2 - 1;
     }
 
-    const noise = audioContext.createBufferSource();
-    const filter = audioContext.createBiquadFilter();
-    const noiseGain = audioContext.createGain();
+    const noise = ctx.createBufferSource();
+    const noiseGain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
 
-    noise.buffer = noiseBuffer;
+    noise.buffer = buffer;
+
     filter.type = "lowpass";
-    filter.frequency.setValueAtTime(900, now);
+    filter.frequency.value = 180;
 
-    noiseGain.gain.setValueAtTime(0.001, now);
-    noiseGain.gain.exponentialRampToValueAtTime(
-      0.45,
-      now + 0.01
-    );
+    noiseGain.gain.setValueAtTime(0.7, now);
     noiseGain.gain.exponentialRampToValueAtTime(
       0.001,
-      now + 0.22
+      now + 0.4
     );
 
     noise.connect(filter);
     filter.connect(noiseGain);
-    noiseGain.connect(audioContext.destination);
+    noiseGain.connect(ctx.destination);
 
     noise.start(now);
-    noise.stop(now + 0.25);
+    noise.stop(now + 0.45);
   }
 
-  $("lottoEyebrow").textContent = LOTTO_CONFIG.eyebrow;
-  $("lottoTitle").textContent = LOTTO_CONFIG.title;
-  $("lottoSubtitle").textContent = LOTTO_CONFIG.subtitle;
-  $("lottoFooter").textContent = LOTTO_CONFIG.footer;
-  startButton.textContent = LOTTO_CONFIG.startText;
-
-  function secureRandomInt(max) {
-    const range = 0x100000000;
-    const limit = Math.floor(range / max) * max;
-    const values = new Uint32Array(1);
-    let value;
-
-    do {
-      crypto.getRandomValues(values);
-      value = values[0];
-    } while (value >= limit);
-
-    return value % max;
+  // 대기 함수
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  function drawSixNumbers() {
-    const numbers = Array.from(
-      { length: 45 },
-      (_, index) => index + 1
-    );
+  // 랜덤 번호 생성
+  function generateNumbers() {
+    const numbers = [];
 
-    for (let i = numbers.length - 1; i > 0; i--) {
-      const j = secureRandomInt(i + 1);
-      [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+    while (numbers.length < balls.length) {
+      const number =
+        Math.floor(
+          Math.random() *
+          (LOTTO_CONFIG.maxNumber - LOTTO_CONFIG.minNumber + 1)
+        ) + LOTTO_CONFIG.minNumber;
+
+      if (!numbers.includes(number)) {
+        numbers.push(number);
+      }
     }
 
-    return numbers.slice(0, 6);
+    return numbers.sort((a, b) => a - b);
   }
 
-  const wait = (ms) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
-
-  function resetScreen() {
+  // 공 초기화
+  function resetBalls() {
     balls.forEach((ball) => {
       ball.textContent = "?";
-      ball.className = "ball";
+      ball.classList.remove("revealed", "last", "spinning");
     });
 
-    resultSummary.hidden = true;
-    summaryBalls.replaceChildren();
-    countdownText.textContent = "";
-    statusText.textContent = LOTTO_CONFIG.drawingText;
-  }
-
-  function revealNumber(ball, number, isLast) {
-    ball.textContent = String(number).padStart(2, "0");
-    ball.className = isLast
-      ? "ball revealed last"
-      : "ball revealed";
-  }
-
-  function showSummary(numbers) {
-    summaryBalls.replaceChildren();
-
-    numbers.forEach((number) => {
-      const chip = document.createElement("span");
-      chip.className = "summary-number";
-      chip.textContent = String(number).padStart(2, "0");
-      summaryBalls.appendChild(chip);
-    });
-
-    resultSummary.hidden = false;
-  }
-
-  async function startDraw() {
-    if (isDrawing) return;
-
-    if (
-      !window.crypto ||
-      typeof crypto.getRandomValues !== "function"
-    ) {
-      statusText.textContent =
-        "안전한 추첨을 위해 HTTPS 환경에서 열어주세요.";
-      return;
+    if (resultSummary) {
+      resultSummary.style.display = "none";
     }
+
+    if (summaryBalls) {
+      summaryBalls.innerHTML = "";
+    }
+
+    if ($("fireworks")) {
+      $("fireworks").classList.remove("active");
+    }
+  }
+
+  // 카운트다운
+  async function countdown() {
+    for (
+      let i = LOTTO_CONFIG.countdownSeconds;
+      i >= 1;
+      i--
+    ) {
+      countdownText.textContent = i;
+      await wait(1000);
+    }
+
+    countdownText.textContent = "START!";
+    await wait(300);
+    countdownText.textContent = "";
+  }
+
+  // 공 회전 애니메이션
+  function startSpinning(ball) {
+    ball.classList.add("spinning");
+
+    const interval = setInterval(() => {
+      ball.textContent =
+        Math.floor(Math.random() * 45) + 1;
+    }, LOTTO_CONFIG.spinInterval);
+
+    return interval;
+  }
+
+  // 공 번호 공개
+  async function revealBall(ball, number, isLast) {
+    const interval = startSpinning(ball);
+
+    if (isLast) {
+      await wait(LOTTO_CONFIG.lastNumberPause);
+    } else {
+      await wait(LOTTO_CONFIG.revealInterval);
+    }
+
+    clearInterval(interval);
+
+    ball.classList.remove("spinning");
+    ball.textContent = number;
+    ball.classList.add("revealed");
+
+    if (isLast) {
+      ball.classList.add("last");
+
+      // 마지막 공에서 드럼롤 정지 후 쾅!
+      stopDrumRoll();
+      playBoom();
+    }
+
+    await wait(LOTTO_CONFIG.afterRevealDelay);
+  }
+
+  // 최종 결과 표시
+  function showResult(numbers) {
+    if (resultSummary) {
+      resultSummary.style.display = "block";
+    }
+
+    if (summaryBalls) {
+      summaryBalls.innerHTML = "";
+
+      numbers.forEach((number) => {
+        const span = document.createElement("span");
+
+        span.className = "summary-number";
+        span.textContent = number;
+
+        summaryBalls.appendChild(span);
+      });
+    }
+
+    if (statusText) {
+      statusText.textContent = "추첨 완료!";
+    }
+
+    if ($("fireworks")) {
+      $("fireworks").classList.add("active");
+    }
+  }
+
+  // 추첨 시작
+  async function startDrawing() {
+    if (isDrawing) return;
 
     isDrawing = true;
     startButton.disabled = true;
-    startButton.textContent = "추첨 진행 중...";
 
-    // 버튼을 누른 순간 오디오 환경 준비
     prepareAudio();
+
+    if (audioContext && audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+
     stopDrumRoll();
+    resetBalls();
 
-    resetScreen();
-
-    const selectedNumbers = drawSixNumbers();
-
-    const spinTimer = window.setInterval(() => {
-      balls.forEach((ball) => {
-        if (!ball.classList.contains("revealed")) {
-          ball.textContent = String(
-            secureRandomInt(45) + 1
-          ).padStart(2, "0");
-
-          ball.classList.add("spinning");
-        }
-      });
-    }, 110);
-
-    try {
-      // 3, 2, 1 카운트다운: 소리 없음
-      for (
-        let seconds = LOTTO_CONFIG.countdownSeconds;
-        seconds > 0;
-        seconds--
-      ) {
-        countdownText.textContent = String(seconds);
-        statusText.textContent =
-          "운명의 순간이 다가옵니다...";
-
-        await wait(1000);
-      }
-
-      // 카운트다운이 끝난 직후 두구두구 시작
-      countdownText.textContent = "START!";
-      statusText.textContent = LOTTO_CONFIG.drawingText;
-
-      playDrumRoll();
-
-      // 번호 순차 공개
-      for (let i = 0; i < selectedNumbers.length; i++) {
-        if (i === selectedNumbers.length - 1) {
-          statusText.textContent =
-            LOTTO_CONFIG.lastNumberText;
-
-          await wait(LOTTO_CONFIG.lastNumberPause);
-        } else {
-          statusText.textContent =
-            `${i + 1}번째 행운의 번호 공개`;
-        }
-
-        await wait(LOTTO_CONFIG.revealInterval);
-
-        // 공이 공개되는 순간
-        revealNumber(
-          balls[i],
-          selectedNumbers[i],
-          i === selectedNumbers.length - 1
-        );
-
-        // 마지막 공이 공개되면 두구두구 정지 후 쾅!
-        if (i === selectedNumbers.length - 1) {
-          stopDrumRoll();
-          playBoom();
-        }
-
-        await wait(350);
-      }
-
-      countdownText.textContent = "";
-      statusText.textContent = LOTTO_CONFIG.finishText;
-      startButton.textContent = "다시 추첨하기";
-
-      showSummary(selectedNumbers);
-      launchFireworks();
-
-    } catch (error) {
-      console.error("추첨 중 오류:", error);
-
-      statusText.textContent =
-        "추첨 중 오류가 발생했습니다. 다시 시도해 주세요.";
-
-      startButton.textContent = LOTTO_CONFIG.startText;
-
-    } finally {
-      stopDrumRoll();
-      window.clearInterval(spinTimer);
-      startButton.disabled = false;
-      isDrawing = false;
+    if (statusText) {
+      statusText.textContent = "추첨 준비 중...";
     }
+
+    // 3, 2, 1 카운트다운 (무음)
+    await countdown();
+
+    if (statusText) {
+      statusText.textContent = "행운의 번호 추첨 중...";
+    }
+
+    // 카운트다운이 끝난 직후 드럼롤 시작
+    playDrumRoll();
+
+    const numbers = generateNumbers();
+
+    // 번호 순서대로 공 공개
+    for (let i = 0; i < balls.length; i++) {
+      const isLast = i === balls.length - 1;
+
+      await revealBall(
+        balls[i],
+        numbers[i],
+        isLast
+      );
+    }
+
+    showResult(numbers);
+
+    isDrawing = false;
+    startButton.disabled = false;
   }
 
-  startButton.addEventListener("click", startDraw);
+  // 버튼 연결
+  startButton.addEventListener("click", startDrawing);
 
-  function launchFireworks() {
-    const canvas = $("fireworks");
-    const context = canvas.getContext("2d");
-
-    const dpr = Math.min(
-      window.devicePixelRatio || 1,
-      2
-    );
-
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
-
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const colors = [
-      "#ffd76d",
-      "#fff2bb",
-      "#ff9e35",
-      "#ffffff",
-      "#f3c454"
-    ];
-
-    let particles = [];
-    const startTime = performance.now();
-
-    function createBurst() {
-      const x =
-        window.innerWidth * (0.2 + Math.random() * 0.6);
-
-      const y =
-        window.innerHeight * (0.12 + Math.random() * 0.42);
-
-      const color =
-        colors[Math.floor(Math.random() * colors.length)];
-
-      for (let i = 0; i < 65; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 6;
-
-        particles.push({
-          x,
-          y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          life: 1,
-          size: 2 + Math.random() * 3,
-          color
-        });
-      }
-    }
-
-    createBurst();
-
-    window.setTimeout(createBurst, 450);
-    window.setTimeout(createBurst, 950);
-    window.setTimeout(createBurst, 1500);
-
-    function animate() {
-      const elapsed = performance.now() - startTime;
-
-      context.clearRect(
-        0,
-        0,
-        window.innerWidth,
-        window.innerHeight
-      );
-
-      particles = particles.filter(
-        (particle) => particle.life > 0
-      );
-
-      particles.forEach((particle) => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        particle.vy += 0.045;
-        particle.vx *= 0.99;
-        particle.life -= 0.009;
-
-        context.globalAlpha = Math.max(0, particle.life);
-        context.fillStyle = particle.color;
-
-        context.beginPath();
-        context.arc(
-          particle.x,
-          particle.y,
-          particle.size,
-          0,
-          Math.PI * 2
-        );
-        context.fill();
-      });
-
-      context.globalAlpha = 1;
-
-      if (elapsed < 4500 || particles.length > 0) {
-        requestAnimationFrame(animate);
-      } else {
-        context.clearRect(
-          0,
-          0,
-          window.innerWidth,
-          window.innerHeight
-        );
-      }
-    }
-
-    requestAnimationFrame(animate);
-  }
 })();
