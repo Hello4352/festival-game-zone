@@ -47,6 +47,6 @@ const LOTTO_CONFIG = {
   finishText: "추첨이 완료되었습니다!",
 
   countdownSeconds: 3,
-  lastNumberPause: 1000,
-  revealInterval: 600
+  lastNumberPause: 4000,
+  revealInterval: 2800
 };
