@@ -34,3 +34,19 @@ const SITE_CONFIG = {
     "테트리스"
   ]
 };
+
+const LOTTO_CONFIG = {
+  eyebrow: "LUCKY NUMBER DRAW",
+  title: "행운의 번호를 뽑아보세요",
+  subtitle: "1부터 45까지, 행운의 숫자 6개!",
+  footer: "GOOD LUCK TO YOU",
+
+  startText: "추첨 시작",
+  drawingText: "행운의 번호를 추첨하고 있습니다.",
+  lastNumberText: "마지막 행운의 번호를 공개합니다!",
+  finishText: "추첨이 완료되었습니다!",
+
+  countdownSeconds: 3,
+  lastNumberPause: 1000,
+  revealInterval: 600
+};
