@@ -21,6 +21,9 @@
   let drumTimer = null;
   let drumPlaying = false;
 
+  // 공 회전 변수
+  let ballIntervals = [];
+
   const LOTTO_CONFIG = {
     countdownSeconds: 3,
     spinInterval: 110,
@@ -32,7 +35,10 @@
     audioOverlap: 0.1
   };
 
+  // =====================================
   // 기본 문구
+  // =====================================
+
   if ($("lottoEyebrow")) {
     $("lottoEyebrow").textContent = "LOTTO DRAW";
   }
@@ -49,7 +55,10 @@
     $("lottoFooter").textContent = "GOOD LUCK!";
   }
 
+  // =====================================
   // 오디오 준비
+  // =====================================
+
   async function prepareAudio() {
     if (!audioContext) {
       const AudioContextClass =
@@ -76,7 +85,10 @@
     }
   }
 
+  // =====================================
   // 드럼롤 재생
+  // =====================================
+
   function playDrumRoll() {
     stopDrumRoll();
 
@@ -100,7 +112,6 @@
       const gain = audioContext.createGain();
 
       source.buffer = drumBuffer;
-
       source.connect(gain);
       gain.connect(drumGain);
 
@@ -111,23 +122,21 @@
       if (drumSources.length === 0) {
         gain.gain.setValueAtTime(1, start);
       } else {
-        // 다음 소리를 0.1초 동안 자연스럽게 올림
+        // 다음 소리를 미리 시작
         gain.gain.setValueAtTime(0, start);
+
         gain.gain.linearRampToValueAtTime(
           1,
           start + overlap
         );
 
-        // 이전 소리를 0.1초 동안 자연스럽게 줄임
+        // 이전 소리와 자연스럽게 연결
         const previous =
           drumSources[drumSources.length - 1];
 
         previous.gain.gain.cancelScheduledValues(start);
 
-        previous.gain.gain.setValueAtTime(
-          1,
-          start
-        );
+        previous.gain.gain.setValueAtTime(1, start);
 
         previous.gain.gain.linearRampToValueAtTime(
           0,
@@ -144,7 +153,7 @@
 
       nextStartTime = end - overlap;
 
-      // 다음 소리를 미리 예약
+      // 다음 소리 예약
       const delay = Math.max(
         0,
         (nextStartTime - audioContext.currentTime - 0.2) * 1000
@@ -156,7 +165,10 @@
     scheduleDrum();
   }
 
+  // =====================================
   // 드럼롤 정지
+  // =====================================
+
   function stopDrumRoll() {
     drumPlaying = false;
 
@@ -169,7 +181,12 @@
       const now = audioContext.currentTime;
 
       drumGain.gain.cancelScheduledValues(now);
-      drumGain.gain.setTargetAtTime(0, now, 0.015);
+
+      drumGain.gain.setTargetAtTime(
+        0,
+        now,
+        0.015
+      );
     }
 
     drumSources.forEach(({ source }) => {
@@ -182,7 +199,10 @@
     drumGain = null;
   }
 
-  // 마지막 공 쾅 소리
+  // =====================================
+  // 마지막 공 쾅 효과음
+  // =====================================
+
   function playBoom() {
     if (!audioContext) return;
 
@@ -201,12 +221,14 @@
     oscillator.type = "sine";
 
     oscillator.frequency.setValueAtTime(100, now);
+
     oscillator.frequency.exponentialRampToValueAtTime(
       25,
       now + 0.65
     );
 
     gain.gain.setValueAtTime(1, now);
+
     gain.gain.exponentialRampToValueAtTime(
       0.001,
       now + 0.75
@@ -243,6 +265,7 @@
     filter.frequency.value = 180;
 
     noiseGain.gain.setValueAtTime(0.7, now);
+
     noiseGain.gain.exponentialRampToValueAtTime(
       0.001,
       now + 0.4
@@ -256,18 +279,27 @@
     noise.stop(now + 0.45);
   }
 
+  // =====================================
   // 대기 함수
+  // =====================================
+
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // 번호 생성
+  // =====================================
+  // 로또 번호 생성
+  // =====================================
+
   function generateNumbers() {
     const numbers = [];
 
     while (numbers.length < balls.length) {
       const number =
-        Math.floor(Math.random() * 45) + 1;
+        Math.floor(
+          Math.random() *
+          (LOTTO_CONFIG.maxNumber - LOTTO_CONFIG.minNumber + 1)
+        ) + LOTTO_CONFIG.minNumber;
 
       if (!numbers.includes(number)) {
         numbers.push(number);
@@ -277,8 +309,13 @@
     return numbers.sort((a, b) => a - b);
   }
 
+  // =====================================
   // 공 초기화
+  // =====================================
+
   function resetBalls() {
+    stopAllBallSpinning();
+
     balls.forEach((ball) => {
       ball.textContent = "?";
 
@@ -302,7 +339,10 @@
     }
   }
 
+  // =====================================
   // 카운트다운
+  // =====================================
+
   async function countdown() {
     for (
       let i = LOTTO_CONFIG.countdownSeconds;
@@ -310,6 +350,7 @@
       i--
     ) {
       countdownText.textContent = i;
+
       await wait(1000);
     }
 
@@ -320,38 +361,87 @@
     countdownText.textContent = "";
   }
 
-  // 공 회전
-  function startSpinning(ball) {
-    ball.classList.add("spinning");
+  // =====================================
+  // 모든 공 동시에 회전
+  // =====================================
 
-    const interval = setInterval(() => {
-      ball.textContent =
-        Math.floor(Math.random() * 45) + 1;
-    }, LOTTO_CONFIG.spinInterval);
+  function startAllBallsSpinning() {
+    stopAllBallSpinning();
 
-    return interval;
+    balls.forEach((ball, index) => {
+      ball.classList.add("spinning");
+
+      // 모든 공이 각각 랜덤 숫자로 계속 변경
+      const interval = setInterval(() => {
+        ball.textContent =
+          Math.floor(
+            Math.random() * LOTTO_CONFIG.maxNumber
+          ) + 1;
+      }, LOTTO_CONFIG.spinInterval);
+
+      ballIntervals[index] = interval;
+    });
   }
 
-  // 공 공개
-  async function revealBall(ball, number, isLast) {
-    const interval = startSpinning(ball);
+  // =====================================
+  // 개별 공 회전 정지
+  // =====================================
 
+  function stopBallSpinning(index) {
+    if (ballIntervals[index]) {
+      clearInterval(ballIntervals[index]);
+      ballIntervals[index] = null;
+    }
+
+    if (balls[index]) {
+      balls[index].classList.remove("spinning");
+    }
+  }
+
+  // =====================================
+  // 전체 공 회전 정지
+  // =====================================
+
+  function stopAllBallSpinning() {
+    ballIntervals.forEach((interval) => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    });
+
+    ballIntervals = [];
+
+    balls.forEach((ball) => {
+      ball.classList.remove("spinning");
+    });
+  }
+
+  // =====================================
+  // 공 하나씩 공개
+  // =====================================
+
+  async function revealBall(index, number, isLast) {
+    const ball = balls[index];
+
+    // 마지막 공이 아니면 일반 공개 시간
     if (isLast) {
       await wait(LOTTO_CONFIG.lastNumberPause);
     } else {
       await wait(LOTTO_CONFIG.revealInterval);
     }
 
-    clearInterval(interval);
+    // 해당 공만 회전 정지
+    stopBallSpinning(index);
 
-    ball.classList.remove("spinning");
+    // 당첨 번호 표시
     ball.textContent = number;
     ball.classList.add("revealed");
 
+    // 마지막 공 처리
     if (isLast) {
       ball.classList.add("last");
 
-      // 마지막 공에서 드럼롤 정지
+      // 드럼롤 정지
       stopDrumRoll();
 
       // 쾅 소리
@@ -361,7 +451,10 @@
     await wait(LOTTO_CONFIG.afterRevealDelay);
   }
 
-  // 결과 표시
+  // =====================================
+  // 최종 결과 표시
+  // =====================================
+
   function showResult(numbers) {
     if (resultSummary) {
       resultSummary.style.display = "block";
@@ -389,7 +482,10 @@
     }
   }
 
+  // =====================================
   // 추첨 시작
+  // =====================================
+
   async function startDrawing() {
     if (isDrawing) return;
 
@@ -400,45 +496,55 @@
     resetBalls();
 
     try {
-      // MP3를 미리 불러오기
+      // 오디오 미리 준비
       await prepareAudio();
 
       if (statusText) {
         statusText.textContent = "추첨 준비 중...";
       }
 
-      // 3, 2, 1 무음 카운트다운
+      // 3, 2, 1 카운트다운
       await countdown();
 
       if (statusText) {
         statusText.textContent = "행운의 번호 추첨 중...";
       }
 
-      // 카운트다운 종료 후 드럼롤 시작
+      // 드럼롤 시작
       playDrumRoll();
 
+      // 6개 공 모두 동시에 회전 시작
+      startAllBallsSpinning();
+
+      // 최종 당첨 번호 생성
       const numbers = generateNumbers();
 
-      // 6개 공 순서대로 공개
+      // 공을 순서대로 하나씩 공개
       for (let i = 0; i < balls.length; i++) {
         const isLast = i === balls.length - 1;
 
         await revealBall(
-          balls[i],
+          i,
           numbers[i],
           isLast
         );
       }
 
+      // 남아 있는 회전 정리
+      stopAllBallSpinning();
+
+      // 결과 표시
       showResult(numbers);
 
     } catch (error) {
       console.error("추첨 오류:", error);
 
       stopDrumRoll();
+      stopAllBallSpinning();
 
       if (statusText) {
-        statusText.textContent = "오디오를 불러오지 못했습니다.";
+        statusText.textContent =
+          "추첨 중 오류가 발생했습니다.";
       }
 
     } finally {
@@ -447,7 +553,10 @@
     }
   }
 
+  // =====================================
   // 버튼 연결
+  // =====================================
+
   startButton.addEventListener("click", startDrawing);
 
 })();
