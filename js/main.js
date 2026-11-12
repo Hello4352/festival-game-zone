@@ -80,7 +80,7 @@
     const status = document.createElement("small");
 
     // 현재 실제 게임이 만들어진 항목
-    const isAvailable = index < 2;
+    const isAvailable = true;
 
     status.textContent = isAvailable
       ? "PLAY NOW"
