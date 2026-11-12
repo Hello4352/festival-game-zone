@@ -12,8 +12,14 @@
   const summaryBalls = $("summaryBalls");
 
   let isDrawing = false;
-  let drumAudio = null;
+
+  // 오디오 변수
   let audioContext = null;
+  let drumBuffer = null;
+  let drumSources = [];
+  let drumGain = null;
+  let drumTimer = null;
+  let drumPlaying = false;
 
   const LOTTO_CONFIG = {
     countdownSeconds: 3,
@@ -22,10 +28,11 @@
     lastNumberPause: 2800,
     afterRevealDelay: 350,
     minNumber: 1,
-    maxNumber: 45
+    maxNumber: 45,
+    audioOverlap: 0.1
   };
 
-  // 화면 기본 문구
+  // 기본 문구
   if ($("lottoEyebrow")) {
     $("lottoEyebrow").textContent = "LOTTO DRAW";
   }
@@ -42,46 +49,140 @@
     $("lottoFooter").textContent = "GOOD LUCK!";
   }
 
-  // 드럼롤 오디오 준비
-  function prepareAudio() {
-    if (!drumAudio) {
-      drumAudio = new Audio("sounds/drum-roll.mp3");
-      drumAudio.loop = true;
-      drumAudio.volume = 1;
-      drumAudio.preload = "auto";
-    }
-
+  // 오디오 준비
+  async function prepareAudio() {
     if (!audioContext) {
       const AudioContextClass =
         window.AudioContext || window.webkitAudioContext;
 
-      if (AudioContextClass) {
-        audioContext = new AudioContextClass();
+      audioContext = new AudioContextClass();
+    }
+
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+
+    if (!drumBuffer) {
+      const response = await fetch("sounds/drum-roll.mp3");
+
+      if (!response.ok) {
+        throw new Error("드럼롤 MP3 파일을 불러오지 못했습니다.");
       }
+
+      const arrayBuffer = await response.arrayBuffer();
+
+      drumBuffer =
+        await audioContext.decodeAudioData(arrayBuffer);
     }
   }
 
-  // 드럼롤 시작
+  // 드럼롤 재생
   function playDrumRoll() {
-    if (!drumAudio) return;
+    stopDrumRoll();
 
-    drumAudio.currentTime = 0;
-    drumAudio.volume = 1;
+    if (!drumBuffer || !audioContext) return;
 
-    drumAudio.play().catch((error) => {
-      console.warn("드럼롤 재생 실패:", error);
-    });
+    drumPlaying = true;
+
+    const duration = drumBuffer.duration;
+    const overlap = LOTTO_CONFIG.audioOverlap;
+
+    drumGain = audioContext.createGain();
+    drumGain.gain.value = 1;
+    drumGain.connect(audioContext.destination);
+
+    let nextStartTime = audioContext.currentTime + 0.05;
+
+    function scheduleDrum() {
+      if (!drumPlaying || !drumGain) return;
+
+      const source = audioContext.createBufferSource();
+      const gain = audioContext.createGain();
+
+      source.buffer = drumBuffer;
+
+      source.connect(gain);
+      gain.connect(drumGain);
+
+      const start = nextStartTime;
+      const end = start + duration;
+
+      // 첫 번째 소리
+      if (drumSources.length === 0) {
+        gain.gain.setValueAtTime(1, start);
+      } else {
+        // 다음 소리를 0.1초 동안 자연스럽게 올림
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(
+          1,
+          start + overlap
+        );
+
+        // 이전 소리를 0.1초 동안 자연스럽게 줄임
+        const previous =
+          drumSources[drumSources.length - 1];
+
+        previous.gain.gain.cancelScheduledValues(start);
+
+        previous.gain.gain.setValueAtTime(
+          1,
+          start
+        );
+
+        previous.gain.gain.linearRampToValueAtTime(
+          0,
+          start + overlap
+        );
+      }
+
+      source.start(start);
+
+      drumSources.push({
+        source,
+        gain
+      });
+
+      nextStartTime = end - overlap;
+
+      // 다음 소리를 미리 예약
+      const delay = Math.max(
+        0,
+        (nextStartTime - audioContext.currentTime - 0.2) * 1000
+      );
+
+      drumTimer = setTimeout(scheduleDrum, delay);
+    }
+
+    scheduleDrum();
   }
 
   // 드럼롤 정지
   function stopDrumRoll() {
-    if (!drumAudio) return;
+    drumPlaying = false;
 
-    drumAudio.pause();
-    drumAudio.currentTime = 0;
+    if (drumTimer) {
+      clearTimeout(drumTimer);
+      drumTimer = null;
+    }
+
+    if (drumGain && audioContext) {
+      const now = audioContext.currentTime;
+
+      drumGain.gain.cancelScheduledValues(now);
+      drumGain.gain.setTargetAtTime(0, now, 0.015);
+    }
+
+    drumSources.forEach(({ source }) => {
+      try {
+        source.stop(audioContext.currentTime + 0.05);
+      } catch (error) {}
+    });
+
+    drumSources = [];
+    drumGain = null;
   }
 
-  // 마지막 공에서 재생할 강한 쾅 소리
+  // 마지막 공 쾅 소리
   function playBoom() {
     if (!audioContext) return;
 
@@ -105,7 +206,7 @@
       now + 0.65
     );
 
-    gain.gain.setValueAtTime(1.0, now);
+    gain.gain.setValueAtTime(1, now);
     gain.gain.exponentialRampToValueAtTime(
       0.001,
       now + 0.75
@@ -117,8 +218,9 @@
     oscillator.start(now);
     oscillator.stop(now + 0.8);
 
-    // 충격음에 노이즈 추가
+    // 충격 노이즈
     const bufferSize = ctx.sampleRate * 0.45;
+
     const buffer = ctx.createBuffer(
       1,
       bufferSize,
@@ -159,16 +261,13 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // 랜덤 번호 생성
+  // 번호 생성
   function generateNumbers() {
     const numbers = [];
 
     while (numbers.length < balls.length) {
       const number =
-        Math.floor(
-          Math.random() *
-          (LOTTO_CONFIG.maxNumber - LOTTO_CONFIG.minNumber + 1)
-        ) + LOTTO_CONFIG.minNumber;
+        Math.floor(Math.random() * 45) + 1;
 
       if (!numbers.includes(number)) {
         numbers.push(number);
@@ -182,7 +281,12 @@
   function resetBalls() {
     balls.forEach((ball) => {
       ball.textContent = "?";
-      ball.classList.remove("revealed", "last", "spinning");
+
+      ball.classList.remove(
+        "revealed",
+        "last",
+        "spinning"
+      );
     });
 
     if (resultSummary) {
@@ -210,11 +314,13 @@
     }
 
     countdownText.textContent = "START!";
+
     await wait(300);
+
     countdownText.textContent = "";
   }
 
-  // 공 회전 애니메이션
+  // 공 회전
   function startSpinning(ball) {
     ball.classList.add("spinning");
 
@@ -226,7 +332,7 @@
     return interval;
   }
 
-  // 공 번호 공개
+  // 공 공개
   async function revealBall(ball, number, isLast) {
     const interval = startSpinning(ball);
 
@@ -245,15 +351,17 @@
     if (isLast) {
       ball.classList.add("last");
 
-      // 마지막 공에서 드럼롤 정지 후 쾅!
+      // 마지막 공에서 드럼롤 정지
       stopDrumRoll();
+
+      // 쾅 소리
       playBoom();
     }
 
     await wait(LOTTO_CONFIG.afterRevealDelay);
   }
 
-  // 최종 결과 표시
+  // 결과 표시
   function showResult(numbers) {
     if (resultSummary) {
       resultSummary.style.display = "block";
@@ -288,46 +396,55 @@
     isDrawing = true;
     startButton.disabled = true;
 
-    prepareAudio();
-
-    if (audioContext && audioContext.state === "suspended") {
-      await audioContext.resume();
-    }
-
     stopDrumRoll();
     resetBalls();
 
-    if (statusText) {
-      statusText.textContent = "추첨 준비 중...";
+    try {
+      // MP3를 미리 불러오기
+      await prepareAudio();
+
+      if (statusText) {
+        statusText.textContent = "추첨 준비 중...";
+      }
+
+      // 3, 2, 1 무음 카운트다운
+      await countdown();
+
+      if (statusText) {
+        statusText.textContent = "행운의 번호 추첨 중...";
+      }
+
+      // 카운트다운 종료 후 드럼롤 시작
+      playDrumRoll();
+
+      const numbers = generateNumbers();
+
+      // 6개 공 순서대로 공개
+      for (let i = 0; i < balls.length; i++) {
+        const isLast = i === balls.length - 1;
+
+        await revealBall(
+          balls[i],
+          numbers[i],
+          isLast
+        );
+      }
+
+      showResult(numbers);
+
+    } catch (error) {
+      console.error("추첨 오류:", error);
+
+      stopDrumRoll();
+
+      if (statusText) {
+        statusText.textContent = "오디오를 불러오지 못했습니다.";
+      }
+
+    } finally {
+      isDrawing = false;
+      startButton.disabled = false;
     }
-
-    // 3, 2, 1 카운트다운 (무음)
-    await countdown();
-
-    if (statusText) {
-      statusText.textContent = "행운의 번호 추첨 중...";
-    }
-
-    // 카운트다운이 끝난 직후 드럼롤 시작
-    playDrumRoll();
-
-    const numbers = generateNumbers();
-
-    // 번호 순서대로 공 공개
-    for (let i = 0; i < balls.length; i++) {
-      const isLast = i === balls.length - 1;
-
-      await revealBall(
-        balls[i],
-        numbers[i],
-        isLast
-      );
-    }
-
-    showResult(numbers);
-
-    isDrawing = false;
-    startButton.disabled = false;
   }
 
   // 버튼 연결
