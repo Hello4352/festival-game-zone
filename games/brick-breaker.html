@@ -194,10 +194,50 @@ button:hover {
   const W = canvas.width;
   const H = canvas.height;
 
-  // 공 속도 설정
-  const INITIAL_BALL_SPEED = Math.hypot(3.5, 4);
-  const MAX_BALL_SPEED = 13;
-  const SPEED_INCREASE_PER_SECOND = 0.2;
+  // ==========================================
+  // 스테이지별 공 속도 설정
+  // ==========================================
+
+  function getStageSpeedSettings(stageNumber) {
+
+    // 1스테이지: 느린 속도
+    if (stageNumber === 1) {
+      return {
+        initial: Math.hypot(2.8, 3.2),
+        acceleration: 0.10,
+        maximum: 7.5
+      };
+    }
+
+    // 2스테이지: 기존 속도
+    if (stageNumber === 2) {
+      return {
+        initial: Math.hypot(3.5, 4),
+        acceleration: 0.2,
+        maximum: 13
+      };
+    }
+
+    // 3스테이지 이상: 점점 빨라짐
+    const extraStages = stageNumber - 2;
+
+    return {
+      initial: Math.min(
+        Math.hypot(3.5, 4) + extraStages * 0.8,
+        12
+      ),
+
+      acceleration: Math.min(
+        0.2 + extraStages * 0.08,
+        0.8
+      ),
+
+      maximum: Math.min(
+        13 + extraStages * 2,
+        23
+      )
+    };
+  }
 
   const paddle = {
     width: 105,
@@ -239,21 +279,31 @@ button:hover {
   let running = false;
   let animationId = null;
   let pointerX = null;
+
+  // 공 발사 대기 상태
+  let waitingForLaunch = true;
+
+  // 스테이지별 가속 시작 시간
   let gameStartedAt = null;
 
-  // 시간에 따른 공 속도 계산
+  // ==========================================
+  // 현재 스테이지 공 속도 계산
+  // ==========================================
+
   function getBallSpeed() {
+    const settings = getStageSpeedSettings(stage);
+
     if (gameStartedAt === null) {
-      return INITIAL_BALL_SPEED;
+      return settings.initial;
     }
 
     const elapsed =
       (performance.now() - gameStartedAt) / 1000;
 
     return Math.min(
-      INITIAL_BALL_SPEED +
-      elapsed * SPEED_INCREASE_PER_SECOND,
-      MAX_BALL_SPEED
+      settings.initial +
+      elapsed * settings.acceleration,
+      settings.maximum
     );
   }
 
@@ -269,7 +319,10 @@ button:hover {
     ball.dy = (ball.dy / currentSpeed) * targetSpeed;
   }
 
+  // ==========================================
   // 5가지 벽돌 배치 생성
+  // ==========================================
+
   function createBricks() {
     bricks = [];
 
@@ -328,21 +381,48 @@ button:hover {
     }
   }
 
-  // 공 위치 초기화
+  // ==========================================
+  // 공 위치 초기화 및 발사
+  // ==========================================
+
   function resetBall() {
     ball.x = paddle.x + paddle.width / 2;
     ball.y = paddle.y - 15;
 
+    ball.dx = 0;
+    ball.dy = 0;
+
+    waitingForLaunch = true;
+    gameStartedAt = null;
+  }
+
+  function launchBall() {
+    if (!waitingForLaunch || lives <= 0) return;
+
+    const settings = getStageSpeedSettings(stage);
+    const speed = settings.initial;
+
     const direction =
       Math.random() < 0.5 ? -1 : 1;
 
-    const speed = getBallSpeed();
+    const baseSpeed = Math.hypot(3.5, 4);
 
-    ball.dx =
-      speed * (3.5 / INITIAL_BALL_SPEED) * direction;
+    ball.dx = speed * (3.5 / baseSpeed) * direction;
+    ball.dy = -speed * (4 / baseSpeed);
 
-    ball.dy =
-      -speed * (4 / INITIAL_BALL_SPEED);
+    waitingForLaunch = false;
+    gameStartedAt = performance.now();
+
+    running = true;
+
+    message.textContent =
+      `STAGE ${stage} 진행 중! ${patternNames[(stage - 1) % 5]}`;
+
+    startButton.textContent = "게임 진행 중";
+
+    if (animationId === null) {
+      update();
+    }
   }
 
   function updateScore() {
@@ -350,7 +430,10 @@ button:hover {
     stageText.textContent = stage;
   }
 
+  // ==========================================
   // 배경
+  // ==========================================
+
   function drawBackground() {
     ctx.fillStyle = "#08111f";
     ctx.fillRect(0, 0, W, H);
@@ -366,7 +449,10 @@ button:hover {
     }
   }
 
+  // ==========================================
   // 벽돌 그리기
+  // ==========================================
+
   function drawBricks() {
     const colors = [
       "#e7c477",
@@ -394,7 +480,10 @@ button:hover {
     });
   }
 
+  // ==========================================
   // 패들
+  // ==========================================
+
   function drawPaddle() {
     ctx.fillStyle = "#e7c477";
 
@@ -410,9 +499,13 @@ button:hover {
     ctx.fill();
   }
 
+  // ==========================================
   // 공
+  // ==========================================
+
   function drawBall() {
     ctx.beginPath();
+
     ctx.arc(
       ball.x,
       ball.y,
@@ -424,7 +517,9 @@ button:hover {
     ctx.fillStyle = "#fff0c5";
     ctx.shadowColor = "#e7c477";
     ctx.shadowBlur = 12;
+
     ctx.fill();
+
     ctx.shadowBlur = 0;
   }
 
@@ -435,7 +530,10 @@ button:hover {
     drawBall();
   }
 
+  // ==========================================
   // 패들 이동
+  // ==========================================
+
   function movePaddle() {
     if (pointerX !== null) {
       paddle.x = pointerX - paddle.width / 2;
@@ -445,9 +543,18 @@ button:hover {
       0,
       Math.min(W - paddle.width, paddle.x)
     );
+
+    // 공이 대기 중이면 패들을 따라 이동
+    if (waitingForLaunch) {
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - 15;
+    }
   }
 
+  // ==========================================
   // 벽돌 충돌
+  // ==========================================
+
   function checkBrickCollision() {
     for (const brick of bricks) {
       if (!brick.alive) continue;
@@ -469,20 +576,40 @@ button:hover {
     }
   }
 
+  // ==========================================
   // 스테이지 클리어
+  // ==========================================
+
   function checkWin() {
     if (bricks.every((brick) => !brick.alive)) {
+
+      running = false;
+      waitingForLaunch = true;
+
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+
+      // 다음 스테이지
       stage++;
 
       createBricks();
+
+      // 공을 패들 위에 정지
       resetBall();
+
       updateScore();
 
       const currentPattern =
         patternNames[(stage - 1) % 5];
 
       message.textContent =
-        `STAGE ${stage}! ${currentPattern} 등장!`;
+        `STAGE ${stage} 클리어! ${currentPattern} 등장! 화면을 클릭해 공을 발사하세요.`;
+
+      startButton.textContent = "다음 스테이지 시작";
+
+      draw();
 
       return true;
     }
@@ -490,10 +617,19 @@ button:hover {
     return false;
   }
 
-  // 라이프 1개: 한 번 놓치면 게임 종료
+  // ==========================================
+  // 게임 오버
+  // ==========================================
+
   function loseLife() {
     lives = 0;
     running = false;
+    waitingForLaunch = false;
+
+    if (animationId !== null) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
 
     message.textContent =
       "GAME OVER! 다시 도전해 보세요.";
@@ -501,9 +637,15 @@ button:hover {
     startButton.textContent = "다시 도전";
   }
 
+  // ==========================================
   // 게임 업데이트
+  // ==========================================
+
   function update() {
-    if (!running) return;
+    if (!running) {
+      animationId = null;
+      return;
+    }
 
     animationId = null;
 
@@ -567,8 +709,6 @@ button:hover {
 
     // 모든 벽돌 제거 확인
     if (checkWin()) {
-      draw();
-      animationId = requestAnimationFrame(update);
       return;
     }
 
@@ -577,29 +717,26 @@ button:hover {
     animationId = requestAnimationFrame(update);
   }
 
+  // ==========================================
   // 게임 시작
+  // ==========================================
+
   function startGame() {
     if (running) return;
 
+    // 게임 오버 상태라면 처음부터 다시 시작
     if (lives <= 0) {
       resetGame();
     }
 
-    if (gameStartedAt === null) {
-      gameStartedAt = performance.now();
-    }
-
-    running = true;
-
-    message.textContent =
-      `STAGE ${stage} 진행 중! ${patternNames[(stage - 1) % 5]}`;
-
-    startButton.textContent = "게임 진행 중";
-
-    update();
+    // 대기 중인 공 발사
+    launchBall();
   }
 
+  // ==========================================
   // 게임 초기화
+  // ==========================================
+
   function resetGame() {
     running = false;
 
@@ -629,7 +766,10 @@ button:hover {
     draw();
   }
 
+  // ==========================================
   // 마우스 및 터치 위치 계산
+  // ==========================================
+
   function setPointerPosition(event) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = W / rect.width;
@@ -640,7 +780,16 @@ button:hover {
 
   canvas.addEventListener("pointerdown", (event) => {
     canvas.setPointerCapture(event.pointerId);
+
     setPointerPosition(event);
+
+    // 대기 상태에서 클릭하면 공 발사
+    if (waitingForLaunch && lives > 0) {
+      launchBall();
+    }
+
+    movePaddle();
+    draw();
   });
 
   canvas.addEventListener("pointermove", (event) => {
@@ -650,6 +799,11 @@ button:hover {
       event.pressure > 0
     ) {
       setPointerPosition(event);
+      movePaddle();
+
+      if (!running) {
+        draw();
+      }
     }
   });
 
@@ -661,7 +815,10 @@ button:hover {
     pointerX = null;
   });
 
+  // ==========================================
   // 키보드 조작
+  // ==========================================
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
@@ -672,12 +829,34 @@ button:hover {
       event.preventDefault();
       paddle.x += paddle.speed;
     }
+
+    paddle.x = Math.max(
+      0,
+      Math.min(W - paddle.width, paddle.x)
+    );
+
+    // 대기 중에는 공도 패들을 따라감
+    if (waitingForLaunch) {
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - 15;
+    }
+
+    if (!running) {
+      draw();
+    }
   });
+
+  // ==========================================
+  // 버튼 이벤트
+  // ==========================================
 
   startButton.addEventListener("click", startGame);
   resetButton.addEventListener("click", resetGame);
 
+  // ==========================================
   // 최초 실행
+  // ==========================================
+
   createBricks();
   resetBall();
   updateScore();
