@@ -63,7 +63,6 @@ h1 {
   border: 1px solid #9b7840;
   border-radius: 12px;
   background: #192941;
-  min-width: 0;
 }
 
 .score-box small {
@@ -104,25 +103,16 @@ canvas {
 button {
   border: 1px solid #e7c477;
   border-radius: 30px;
-  padding: 13px 17px;
+  padding: 13px 25px;
   margin: 5px;
   background: #192941;
   color: #fff0c5;
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
 }
 
 button:hover {
   background: #8b642b;
-}
-
-#specialButton {
-  border-color: #48e878;
-  color: #8dffab;
-}
-
-#specialButton:hover {
-  background: #176b39;
 }
 
 .back {
@@ -132,7 +122,7 @@ button:hover {
   text-decoration: none;
 }
 
-@media (max-width: 420px) {
+@media (max-width: 380px) {
   .container {
     padding: 18px 12px;
   }
@@ -144,16 +134,12 @@ button:hover {
   .score-box strong {
     font-size: 19px;
   }
-
-  button {
-    padding: 12px 13px;
-    font-size: 14px;
-  }
 }
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
   <div class="eyebrow">CASINO MINI GAME 02</div>
@@ -185,7 +171,6 @@ button:hover {
   </div>
 
   <button id="startButton">게임 시작</button>
-  <button id="specialButton">특별 스테이지</button>
   <button id="resetButton">다시 시작</button>
 
   <a class="back" href="../index.html">
@@ -206,17 +191,18 @@ button:hover {
   const message = document.getElementById("message");
 
   const startButton = document.getElementById("startButton");
-  const specialButton = document.getElementById("specialButton");
   const resetButton = document.getElementById("resetButton");
 
   const W = canvas.width;
   const H = canvas.height;
 
   // ==========================================
-  // 스테이지별 속도 설정
+  // 스테이지별 공 속도 설정
   // ==========================================
 
   function getStageSpeedSettings(stageNumber) {
+
+    // 1스테이지: 느린 속도
     if (stageNumber === 1) {
       return {
         initial: Math.hypot(2.8, 3.2),
@@ -225,6 +211,7 @@ button:hover {
       };
     }
 
+    // 2스테이지: 기존 속도
     if (stageNumber === 2) {
       return {
         initial: Math.hypot(3.5, 4),
@@ -233,6 +220,7 @@ button:hover {
       };
     }
 
+    // 3스테이지부터 점점 빨라짐
     const extraStages = stageNumber - 2;
 
     return {
@@ -240,10 +228,12 @@ button:hover {
         Math.hypot(3.5, 4) + extraStages * 0.8,
         12
       ),
+
       acceleration: Math.min(
         0.2 + extraStages * 0.08,
         0.8
       ),
+
       maximum: Math.min(
         13 + extraStages * 2,
         23
@@ -252,15 +242,23 @@ button:hover {
   }
 
   // ==========================================
-  // 기본 설정
+  // 게임 기본 설정
   // ==========================================
 
   const paddle = {
     width: 105,
     height: 13,
-    x: W / 2 - 52,
+    x: W / 2 - 52.5,
     y: H - 35,
     speed: 8
+  };
+
+  const ball = {
+    x: W / 2,
+    y: H - 55,
+    radius: 8,
+    dx: 0,
+    dy: 0
   };
 
   const brickRows = 5;
@@ -279,7 +277,7 @@ button:hover {
     "세로 기둥 배치"
   ];
 
-  const normalColors = [
+  const colors = [
     "#e7c477",
     "#d8a85d",
     "#c18c4b",
@@ -287,17 +285,7 @@ button:hover {
     "#8b642b"
   ];
 
-  const specialColors = [
-    "#28ef45",
-    "#22d83d",
-    "#16c934",
-    "#48ff5d",
-    "#0bb82b"
-  ];
-
   let bricks = [];
-  let balls = [];
-  let powerUps = [];
 
   let score = 0;
   let stage = 1;
@@ -305,26 +293,15 @@ button:hover {
 
   let running = false;
   let waitingForLaunch = true;
-  let animationId = null;
 
+  let animationId = null;
   let pointerX = null;
+
   let gameStartedAt = null;
 
-  let gameMode = "normal";
-
   // ==========================================
-  // 공 생성
+  // 현재 공 속도 계산
   // ==========================================
-
-  function createBall(x, y, dx, dy) {
-    return {
-      x,
-      y,
-      radius: 8,
-      dx,
-      dy
-    };
-  }
 
   function getBallSpeed() {
     const settings = getStageSpeedSettings(stage);
@@ -343,21 +320,29 @@ button:hover {
     );
   }
 
-  function applyBallSpeed(ball) {
-    if (gameMode !== "normal") return;
+  // ==========================================
+  // 공 속도 적용
+  // ==========================================
 
-    const currentSpeed = Math.hypot(ball.dx, ball.dy);
+  function applyBallSpeed() {
+    const currentSpeed = Math.hypot(
+      ball.dx,
+      ball.dy
+    );
 
     if (currentSpeed === 0) return;
 
     const targetSpeed = getBallSpeed();
 
-    ball.dx = ball.dx / currentSpeed * targetSpeed;
-    ball.dy = ball.dy / currentSpeed * targetSpeed;
+    ball.dx =
+      ball.dx / currentSpeed * targetSpeed;
+
+    ball.dy =
+      ball.dy / currentSpeed * targetSpeed;
   }
 
   // ==========================================
-  // 일반 스테이지 벽돌
+  // 벽돌 생성
   // ==========================================
 
   function createBricks() {
@@ -367,23 +352,37 @@ button:hover {
 
     for (let row = 0; row < brickRows; row++) {
       for (let col = 0; col < brickColumns; col++) {
+
         let shouldExist = false;
 
+        // 1. 전체 벽돌
         if (pattern === 0) {
           shouldExist = true;
-        } else if (pattern === 1) {
+        }
+
+        // 2. 체커보드
+        else if (pattern === 1) {
           shouldExist = (row + col) % 2 === 0;
-        } else if (pattern === 2) {
+        }
+
+        // 3. 테두리
+        else if (pattern === 2) {
           shouldExist =
             row === 0 ||
             row === brickRows - 1 ||
             col === 0 ||
             col === brickColumns - 1;
-        } else if (pattern === 3) {
+        }
+
+        // 4. 다이아몬드
+        else if (pattern === 3) {
           shouldExist =
             Math.abs(col - 4) +
             Math.abs(row - 2) * 2 <= 6;
-        } else if (pattern === 4) {
+        }
+
+        // 5. 세로 기둥
+        else if (pattern === 4) {
           shouldExist =
             col % 2 === 0 ||
             row === 0 ||
@@ -398,145 +397,58 @@ button:hover {
           width: brickWidth,
           height: brickHeight,
           alive: true,
-          indestructible: false,
-          color: (row + stage - 1) % 5
+          color: (row + stage - 1) % colors.length
         });
       }
     }
   }
 
   // ==========================================
-  // 특별 스테이지
-  // ==========================================
-
-  function createSpecialStage() {
-    bricks = [];
-    powerUps = [];
-    balls = [];
-
-    // 초록색 벽돌 격자
-    const columns = 16;
-    const rows = 9;
-
-    const width = 31;
-    const height = 13;
-    const gap = 5;
-
-    const totalWidth =
-      columns * width + (columns - 1) * gap;
-
-    const left = (W - totalWidth) / 2;
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < columns; col++) {
-        bricks.push({
-          x: left + col * (width + gap),
-          y: 35 + row * (height + gap),
-          width,
-          height,
-          alive: true,
-          indestructible: false,
-          color: Math.floor(Math.random() * specialColors.length)
-        });
-      }
-    }
-
-    // 남색 장애물 벽
-    // 가로 벽 왼쪽
-    bricks.push({
-      x: 20,
-      y: 245,
-      width: 230,
-      height: 17,
-      alive: true,
-      indestructible: true
-    });
-
-    // 가로 벽 오른쪽
-    bricks.push({
-      x: 350,
-      y: 245,
-      width: 230,
-      height: 17,
-      alive: true,
-      indestructible: true
-    });
-
-    // 세로 벽 왼쪽
-    bricks.push({
-      x: 250,
-      y: 245,
-      width: 17,
-      height: 100,
-      alive: true,
-      indestructible: true
-    });
-
-    // 세로 벽 오른쪽
-    bricks.push({
-      x: 333,
-      y: 245,
-      width: 17,
-      height: 100,
-      alive: true,
-      indestructible: true
-    });
-
-    // 아래쪽 중앙 장애물
-    bricks.push({
-      x: 267,
-      y: 345,
-      width: 66,
-      height: 15,
-      alive: true,
-      indestructible: true
-    });
-  }
-
-  // ==========================================
-  // 공 초기화 및 발사 대기
+  // 공 초기화
   // ==========================================
 
   function resetBall() {
-    balls = [
-      createBall(
-        paddle.x + paddle.width / 2,
-        paddle.y - 15,
-        0,
-        0
-      )
-    ];
+    ball.x = paddle.x + paddle.width / 2;
+    ball.y = paddle.y - 15;
+
+    ball.dx = 0;
+    ball.dy = 0;
 
     waitingForLaunch = true;
     gameStartedAt = null;
   }
 
+  // ==========================================
+  // 공 발사
+  // ==========================================
+
   function launchBall() {
     if (!waitingForLaunch || lives <= 0) return;
 
     const settings = getStageSpeedSettings(stage);
-    const speed = settings.initial;
 
-    const direction = Math.random() < 0.5 ? -1 : 1;
+    const speed = settings.initial;
     const baseSpeed = Math.hypot(3.5, 4);
 
-    balls = [
-      createBall(
-        paddle.x + paddle.width / 2,
-        paddle.y - 15,
-        speed * 3.5 / baseSpeed * direction,
-        -speed * 4 / baseSpeed
-      )
-    ];
+    const direction =
+      Math.random() < 0.5 ? -1 : 1;
+
+    ball.x = paddle.x + paddle.width / 2;
+    ball.y = paddle.y - 15;
+
+    ball.dx =
+      speed * (3.5 / baseSpeed) * direction;
+
+    ball.dy =
+      -speed * (4 / baseSpeed);
 
     waitingForLaunch = false;
-    gameStartedAt = performance.now();
     running = true;
 
+    gameStartedAt = performance.now();
+
     message.textContent =
-      gameMode === "special"
-        ? "특별 스테이지 진행 중! 아이템을 획득하세요!"
-        : `STAGE ${stage} 진행 중! ${patternNames[(stage - 1) % 5]}`;
+      `STAGE ${stage} 진행 중! ${patternNames[(stage - 1) % 5]}`;
 
     startButton.textContent = "게임 진행 중";
 
@@ -546,17 +458,16 @@ button:hover {
   }
 
   // ==========================================
-  // 점수 및 화면 정보
+  // 점수 업데이트
   // ==========================================
 
   function updateScore() {
     scoreText.textContent = score;
-    stageText.textContent =
-      gameMode === "special" ? "SPECIAL" : stage;
+    stageText.textContent = stage;
   }
 
   // ==========================================
-  // 배경
+  // 배경 그리기
   // ==========================================
 
   function drawBackground() {
@@ -582,105 +493,31 @@ button:hover {
     bricks.forEach((brick) => {
       if (!brick.alive) return;
 
-      if (brick.indestructible) {
-        ctx.fillStyle = "#151d43";
-        ctx.strokeStyle = "#151d43";
-        ctx.lineWidth = 2;
-
-        ctx.beginPath();
-        ctx.roundRect(
-          brick.x,
-          brick.y,
-          brick.width,
-          brick.height,
-          3
-        );
-        ctx.fill();
-        ctx.stroke();
-
-      } else if (gameMode === "special") {
-        ctx.fillStyle = specialColors[brick.color];
-
-        ctx.fillRect(
-          brick.x,
-          brick.y,
-          brick.width,
-          brick.height
-        );
-
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(
-          brick.x,
-          brick.y,
-          brick.width,
-          brick.height
-        );
-
-      } else {
-        ctx.fillStyle = normalColors[brick.color];
-
-        ctx.beginPath();
-        ctx.roundRect(
-          brick.x,
-          brick.y,
-          brick.width,
-          brick.height,
-          5
-        );
-        ctx.fill();
-      }
-    });
-  }
-
-  // ==========================================
-  // 아이템 그리기
-  // ==========================================
-
-  function drawPowerUps() {
-    powerUps.forEach((item) => {
-      ctx.save();
+      ctx.fillStyle = colors[brick.color];
 
       ctx.beginPath();
-      ctx.arc(
-        item.x + item.width / 2,
-        item.y + item.height / 2,
-        14,
-        0,
-        Math.PI * 2
+
+      ctx.roundRect(
+        brick.x,
+        brick.y,
+        brick.width,
+        brick.height,
+        5
       );
 
-      ctx.fillStyle =
-        item.type === "plus" ? "#1689ed" : "#0874c9";
-
-      ctx.shadowColor = "#ffffff";
-      ctx.shadowBlur = 9;
       ctx.fill();
-      ctx.shadowBlur = 0;
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 16px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-
-      ctx.fillText(
-        item.type === "plus" ? "+3" : "×3",
-        item.x + item.width / 2,
-        item.y + item.height / 2
-      );
-
-      ctx.restore();
     });
   }
 
   // ==========================================
-  // 패들
+  // 패들 그리기
   // ==========================================
 
   function drawPaddle() {
     ctx.fillStyle = "#e7c477";
 
     ctx.beginPath();
+
     ctx.roundRect(
       paddle.x,
       paddle.y,
@@ -693,34 +530,38 @@ button:hover {
   }
 
   // ==========================================
-  // 공
+  // 공 그리기
   // ==========================================
 
-  function drawBalls() {
-    balls.forEach((ball) => {
-      ctx.beginPath();
-      ctx.arc(
-        ball.x,
-        ball.y,
-        ball.radius,
-        0,
-        Math.PI * 2
-      );
+  function drawBall() {
+    ctx.beginPath();
 
-      ctx.fillStyle = "#fff0c5";
-      ctx.shadowColor = "#e7c477";
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    });
+    ctx.arc(
+      ball.x,
+      ball.y,
+      ball.radius,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fillStyle = "#fff0c5";
+    ctx.shadowColor = "#e7c477";
+    ctx.shadowBlur = 12;
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
   }
+
+  // ==========================================
+  // 전체 화면 그리기
+  // ==========================================
 
   function draw() {
     drawBackground();
     drawBricks();
-    drawPowerUps();
     drawPaddle();
-    drawBalls();
+    drawBall();
   }
 
   // ==========================================
@@ -737,9 +578,10 @@ button:hover {
       Math.min(W - paddle.width, paddle.x)
     );
 
-    if (waitingForLaunch && balls.length === 1) {
-      balls[0].x = paddle.x + paddle.width / 2;
-      balls[0].y = paddle.y - 15;
+    // 발사 전 공은 패들을 따라 이동
+    if (waitingForLaunch) {
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - 15;
     }
   }
 
@@ -747,7 +589,7 @@ button:hover {
   // 벽돌 충돌
   // ==========================================
 
-  function checkBrickCollision(ball) {
+  function checkBrickCollision() {
     for (const brick of bricks) {
       if (!brick.alive) continue;
 
@@ -759,66 +601,15 @@ button:hover {
 
       if (!collided) continue;
 
-      if (brick.indestructible) {
-        const overlapLeft =
-          ball.x + ball.radius - brick.x;
-
-        const overlapRight =
-          brick.x + brick.width - (ball.x - ball.radius);
-
-        const overlapTop =
-          ball.y + ball.radius - brick.y;
-
-        const overlapBottom =
-          brick.y + brick.height - (ball.y - ball.radius);
-
-        const minOverlap = Math.min(
-          overlapLeft,
-          overlapRight,
-          overlapTop,
-          overlapBottom
-        );
-
-        if (
-          minOverlap === overlapLeft ||
-          minOverlap === overlapRight
-        ) {
-          ball.dx *= -1;
-
-          if (minOverlap === overlapLeft) {
-            ball.x = brick.x - ball.radius;
-          } else {
-            ball.x = brick.x + brick.width + ball.radius;
-          }
-
-        } else {
-          ball.dy *= -1;
-
-          if (minOverlap === overlapTop) {
-            ball.y = brick.y - ball.radius;
-          } else {
-            ball.y = brick.y + brick.height + ball.radius;
-          }
-        }
-
-        return;
-      }
-
-      // 파괴 가능한 벽돌
       brick.alive = false;
+
       ball.dy *= -1;
 
       score += 10;
+
       updateScore();
 
-      if (gameMode === "special") {
-        dropPowerUp(
-          brick.x + brick.width / 2 - 14,
-          brick.y + brick.height / 2 - 14
-        );
-      }
-
-      return;
+      break;
     }
   }
 
@@ -826,7 +617,7 @@ button:hover {
   // 패들 충돌
   // ==========================================
 
-  function checkPaddleCollision(ball) {
+  function checkPaddleCollision() {
     if (
       ball.dy > 0 &&
       ball.y + ball.radius >= paddle.y &&
@@ -834,6 +625,7 @@ button:hover {
       ball.x + ball.radius >= paddle.x &&
       ball.x - ball.radius <= paddle.x + paddle.width
     ) {
+
       const hitPosition =
         (ball.x - (paddle.x + paddle.width / 2)) /
         (paddle.width / 2);
@@ -842,7 +634,7 @@ button:hover {
         Math.max(-1, Math.min(1, hitPosition)) *
         (Math.PI / 3);
 
-      const speed = Math.hypot(ball.dx, ball.dy);
+      const speed = getBallSpeed();
 
       ball.dx = speed * Math.sin(angle);
       ball.dy = -speed * Math.cos(angle);
@@ -852,162 +644,17 @@ button:hover {
   }
 
   // ==========================================
-  // 아이템 드롭
+  // 스테이지 클리어
   // ==========================================
 
-  function dropPowerUp(x, y) {
-    if (gameMode !== "special") return;
-
-    const chance = Math.random();
-
-    // 전체 아이템 등장 확률 20%
-    if (chance >= 0.20) return;
-
-    const type = chance < 0.10 ? "plus" : "triple";
-
-    powerUps.push({
-      x,
-      y,
-      width: 28,
-      height: 28,
-      speed: 2.5,
-      type
-    });
-  }
-
-  // ==========================================
-  // +3 : 공 3개 추가
-  // ==========================================
-
-  function addThreeBalls() {
-    const baseX = paddle.x + paddle.width / 2;
-    const baseY = paddle.y - 15;
-
-    const directions = [-0.55, 0, 0.55];
-
-    directions.forEach((angle) => {
-      const speed = 5.5;
-
-      balls.push(
-        createBall(
-          baseX,
-          baseY,
-          speed * Math.sin(angle),
-          -speed * Math.cos(angle)
-        )
-      );
-    });
-
-    message.textContent =
-      "🎉 +3 획득! 패들에서 공 3개가 추가됐습니다!";
-  }
-
-  // ==========================================
-  // ×3 : 공 분열
-  // ==========================================
-
-  function splitBall(targetBall) {
-    const speed = Math.hypot(
-      targetBall.dx,
-      targetBall.dy
-    );
-
-    if (speed === 0) return;
-
-    const angle = Math.atan2(
-      targetBall.dy,
-      targetBall.dx
-    );
-
-    const spread = 0.38;
-    const newBalls = [];
-
-    for (let i = -1; i <= 1; i++) {
-      const newAngle = angle + spread * i;
-
-      newBalls.push(
-        createBall(
-          targetBall.x,
-          targetBall.y,
-          Math.cos(newAngle) * speed,
-          Math.sin(newAngle) * speed
-        )
-      );
-    }
-
-    const index = balls.indexOf(targetBall);
-
-    if (index !== -1) {
-      balls.splice(index, 1, ...newBalls);
-    }
-
-    message.textContent =
-      "⚡ ×3 획득! 공이 현재 위치에서 3개로 분열했습니다!";
-  }
-
-  // ==========================================
-  // 아이템 획득
-  // ==========================================
-
-  function checkPowerUpCollision() {
-    for (let i = powerUps.length - 1; i >= 0; i--) {
-      const item = powerUps[i];
-
-      item.y += item.speed;
-
-      const caught =
-        item.x + item.width > paddle.x &&
-        item.x < paddle.x + paddle.width &&
-        item.y + item.height >= paddle.y &&
-        item.y <= paddle.y + paddle.height;
-
-      if (caught) {
-        if (item.type === "plus") {
-          addThreeBalls();
-
-        } else {
-          // 아이템을 잡았을 때 가장 가까운 공을 분열
-          let nearestBall = null;
-          let nearestDistance = Infinity;
-
-          balls.forEach((ball) => {
-            const distance = Math.hypot(
-              ball.x - (item.x + item.width / 2),
-              ball.y - (item.y + item.height / 2)
-            );
-
-            if (distance < nearestDistance) {
-              nearestDistance = distance;
-              nearestBall = ball;
-            }
-          });
-
-          if (nearestBall) {
-            splitBall(nearestBall);
-          }
-        }
-
-        powerUps.splice(i, 1);
-        continue;
-      }
-
-      if (item.y > H) {
-        powerUps.splice(i, 1);
-      }
-    }
-  }
-
-  // ==========================================
-  // 일반 스테이지 클리어
-  // ==========================================
-
-  function checkNormalWin() {
+  function checkWin() {
     const remaining = bricks.some(
       (brick) => brick.alive
     );
 
     if (remaining) return false;
 
+    // 공 멈추기
     running = false;
     waitingForLaunch = true;
 
@@ -1016,6 +663,7 @@ button:hover {
       animationId = null;
     }
 
+    // 다음 스테이지
     stage++;
 
     createBricks();
@@ -1026,38 +674,9 @@ button:hover {
       patternNames[(stage - 1) % 5];
 
     message.textContent =
-      `STAGE ${stage} 시작! ${currentPattern} 등장! 화면을 클릭해 공을 발사하세요.`;
+      `STAGE ${stage}! ${currentPattern} 등장! 화면을 클릭해 공을 발사하세요.`;
 
     startButton.textContent = "다음 스테이지 시작";
-
-    draw();
-
-    return true;
-  }
-
-  // ==========================================
-  // 특별 스테이지 클리어
-  // ==========================================
-
-  function checkSpecialWin() {
-    const remaining = bricks.some(
-      (brick) => brick.alive && !brick.indestructible
-    );
-
-    if (remaining) return false;
-
-    running = false;
-    waitingForLaunch = true;
-
-    if (animationId !== null) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
-    }
-
-    message.textContent =
-      "특별 스테이지 클리어! 다시 시작 버튼으로 일반 게임에 돌아갈 수 있어.";
-
-    startButton.textContent = "특별 스테이지 완료";
 
     draw();
 
@@ -1070,6 +689,7 @@ button:hover {
 
   function loseLife() {
     lives = 0;
+
     running = false;
     waitingForLaunch = false;
 
@@ -1077,8 +697,6 @@ button:hover {
       cancelAnimationFrame(animationId);
       animationId = null;
     }
-
-    balls = [];
 
     message.textContent =
       "GAME OVER! 다시 도전해 보세요.";
@@ -1100,67 +718,46 @@ button:hover {
 
     movePaddle();
 
-    checkPowerUpCollision();
+    // 시간이 지날수록 공 가속
+    applyBallSpeed();
 
-    // 여러 공 이동
-    for (let i = balls.length - 1; i >= 0; i--) {
-      const ball = balls[i];
+    // 공 이동
+    ball.x += ball.dx;
+    ball.y += ball.dy;
 
-      if (gameMode === "normal") {
-        applyBallSpeed(ball);
-      }
-
-      ball.x += ball.dx;
-      ball.y += ball.dy;
-
-      // 좌우 벽
-      if (ball.x + ball.radius >= W) {
-        ball.x = W - ball.radius;
-        ball.dx = -Math.abs(ball.dx);
-      }
-
-      if (ball.x - ball.radius <= 0) {
-        ball.x = ball.radius;
-        ball.dx = Math.abs(ball.dx);
-      }
-
-      // 위쪽 벽
-      if (ball.y - ball.radius <= 0) {
-        ball.y = ball.radius;
-        ball.dy = Math.abs(ball.dy);
-      }
-
-      // 패들
-      checkPaddleCollision(ball);
-
-      // 바닥에 떨어진 공 제거
-      if (ball.y - ball.radius > H) {
-        balls.splice(i, 1);
-        continue;
-      }
-
-      // 벽돌
-      checkBrickCollision(ball);
+    // 오른쪽 벽 충돌
+    if (ball.x + ball.radius >= W) {
+      ball.x = W - ball.radius;
+      ball.dx = -Math.abs(ball.dx);
     }
 
-    // 모든 공이 사라지면 게임 오버
-    if (balls.length === 0) {
+    // 왼쪽 벽 충돌
+    if (ball.x - ball.radius <= 0) {
+      ball.x = ball.radius;
+      ball.dx = Math.abs(ball.dx);
+    }
+
+    // 위쪽 벽 충돌
+    if (ball.y - ball.radius <= 0) {
+      ball.y = ball.radius;
+      ball.dy = Math.abs(ball.dy);
+    }
+
+    // 패들 충돌
+    checkPaddleCollision();
+
+    // 공이 바닥에 떨어짐
+    if (ball.y - ball.radius > H) {
       loseLife();
       draw();
       return;
     }
 
-    if (
-      gameMode === "normal" &&
-      checkNormalWin()
-    ) {
-      return;
-    }
+    // 벽돌 충돌
+    checkBrickCollision();
 
-    if (
-      gameMode === "special" &&
-      checkSpecialWin()
-    ) {
+    // 스테이지 클리어 확인
+    if (checkWin()) {
       return;
     }
 
@@ -1176,47 +773,15 @@ button:hover {
   function startGame() {
     if (running) return;
 
+    // 게임 오버 상태라면 초기화
     if (lives <= 0) {
       resetGame();
     }
 
+    // 공 발사
     if (waitingForLaunch) {
       launchBall();
     }
-  }
-
-  // ==========================================
-  // 특별 스테이지 시작
-  // ==========================================
-
-  function startSpecialStage() {
-    if (animationId !== null) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
-    }
-
-    running = false;
-    gameMode = "special";
-
-    score = 0;
-    lives = 1;
-    stage = 1;
-
-    pointerX = null;
-    gameStartedAt = null;
-
-    paddle.x = W / 2 - paddle.width / 2;
-
-    createSpecialStage();
-    resetBall();
-    updateScore();
-
-    message.textContent =
-      "특별 스테이지! 화면을 클릭하거나 시작 버튼을 눌러 공을 발사하세요.";
-
-    startButton.textContent = "특별 스테이지 시작";
-
-    draw();
   }
 
   // ==========================================
@@ -1225,13 +790,12 @@ button:hover {
 
   function resetGame() {
     running = false;
+    waitingForLaunch = true;
 
     if (animationId !== null) {
       cancelAnimationFrame(animationId);
       animationId = null;
     }
-
-    gameMode = "normal";
 
     score = 0;
     lives = 1;
@@ -1240,12 +804,11 @@ button:hover {
     gameStartedAt = null;
     pointerX = null;
 
-    powerUps = [];
-
     paddle.x = W / 2 - paddle.width / 2;
 
     createBricks();
     resetBall();
+
     updateScore();
 
     message.textContent =
@@ -1257,30 +820,35 @@ button:hover {
   }
 
   // ==========================================
-  // 마우스 및 터치 조작
+  // 마우스 및 터치 위치 계산
   // ==========================================
 
   function setPointerPosition(event) {
     const rect = canvas.getBoundingClientRect();
+
     const scaleX = W / rect.width;
 
     pointerX =
       (event.clientX - rect.left) * scaleX;
   }
 
+  // 화면 클릭 및 터치
   canvas.addEventListener("pointerdown", (event) => {
     canvas.setPointerCapture(event.pointerId);
 
     setPointerPosition(event);
 
+    movePaddle();
+
+    // 스테이지 클리어 후 화면 클릭 시 재발사
     if (waitingForLaunch && lives > 0) {
       launchBall();
     }
 
-    movePaddle();
     draw();
   });
 
+  // 패들 드래그
   canvas.addEventListener("pointermove", (event) => {
     if (
       event.pointerType === "mouse" ||
@@ -1288,6 +856,7 @@ button:hover {
       event.pressure > 0
     ) {
       setPointerPosition(event);
+
       movePaddle();
 
       if (!running) {
@@ -1324,9 +893,9 @@ button:hover {
       Math.min(W - paddle.width, paddle.x)
     );
 
-    if (waitingForLaunch && balls.length === 1) {
-      balls[0].x = paddle.x + paddle.width / 2;
-      balls[0].y = paddle.y - 15;
+    if (waitingForLaunch) {
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - 15;
     }
 
     if (!running) {
@@ -1339,7 +908,6 @@ button:hover {
   // ==========================================
 
   startButton.addEventListener("click", startGame);
-  specialButton.addEventListener("click", startSpecialStage);
   resetButton.addEventListener("click", resetGame);
 
   // ==========================================
@@ -1353,5 +921,6 @@ button:hover {
 
 })();
 </script>
+
 </body>
 </html>
