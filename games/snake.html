@@ -2,451 +2,985 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1220">
-  <title>snake | 카지노</title>
-  <style>
-    * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1220">
+<title>SNAKE | 카지노</title>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 20px 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #0b1220;
-      color: #f5f0df;
-      font-family: Arial, sans-serif;
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    .game {
-      width: 100%;
-      max-width: 500px;
-      text-align: center;
-    }
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px 14px;
+  background: radial-gradient(ellipse at top, #1b2b43, #0b1220 70%);
+  color: #fff0c5;
+  font-family: Arial, "Noto Sans KR", sans-serif;
+  text-align: center;
+}
 
-    h1 {
-      color: #e9c76b;
-      margin-bottom: 8px;
-    }
+.container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+  border: 1px solid #9b7840;
+  border-radius: 24px;
+  background: rgba(9, 17, 31, 0.88);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.3);
+}
 
-    .description {
-      color: #b8c0ce;
-      line-height: 1.5;
-      margin-bottom: 18px;
-    }
+.eyebrow {
+  color: #e7c477;
+  letter-spacing: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
 
-    .stats {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
+h1 {
+  margin: 12px 0 5px;
+  font-size: 38px;
+  letter-spacing: 5px;
+}
 
-    .stat {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #536078;
-      border-radius: 10px;
-      background: #142036;
-    }
+.description {
+  color: #9eafbd;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
 
-    .stat small {
-      display: block;
-      color: #aeb8c9;
-      margin-bottom: 6px;
-    }
+.scoreboard {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
 
-    .stat strong {
-      color: #e9c76b;
-      font-size: 21px;
-    }
+.score-box {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #9b7840;
+  border-radius: 12px;
+  background: #192941;
+}
 
-    .board-wrap {
-      position: relative;
-      width: 100%;
-      border: 3px solid #d6ad4c;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #101d30;
-    }
+.score-box small {
+  display: block;
+  color: #aebbd0;
+  font-size: 11px;
+  margin-bottom: 5px;
+  letter-spacing: 1px;
+}
 
-    canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-      touch-action: none;
-    }
+.score-box strong {
+  color: #f5ca70;
+  font-size: 22px;
+}
 
-    .message {
-      min-height: 28px;
-      margin: 13px 0;
-      color: #e9c76b;
-      font-weight: bold;
-    }
+.game-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 3px solid #526b4b;
+  border-radius: 15px;
+  background: #17251e;
+  box-shadow: 0 0 20px rgba(65, 150, 70, 0.12);
+}
 
-    .main-buttons {
-      display: flex;
-      gap: 10px;
-    }
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
 
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 13px;
-      background: #e9c76b;
-      color: #172033;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  background: rgba(5, 14, 10, 0.76);
+  backdrop-filter: blur(3px);
+}
 
-    .main-buttons button {
-      flex: 1;
-    }
+.game-overlay[hidden] {
+  display: none;
+}
 
-    .controls {
-      width: 190px;
-      margin: 20px auto 0;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 7px;
-    }
+.overlay-title {
+  color: #b9f58b;
+  font-size: 30px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
 
-    .controls button {
-      min-height: 48px;
-      font-size: 21px;
-      background: #263750;
-      color: #f5f0df;
-      border: 1px solid #536078;
-      touch-action: manipulation;
-      user-select: none;
-    }
+.overlay-description {
+  color: #e0ebd6;
+  font-size: 14px;
+  line-height: 1.6;
+}
 
-    .controls .empty {
-      visibility: hidden;
-    }
+.message {
+  min-height: 25px;
+  margin: 16px 0;
+  color: #e7c477;
+  font-weight: bold;
+  font-size: 14px;
+}
 
-    .back {
-      display: inline-block;
-      margin-top: 22px;
-      color: #e9c76b;
-      text-decoration: none;
-    }
-  </style>
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  border: 1px solid #d5b46c;
+  border-radius: 25px;
+  padding: 12px 22px;
+  background: #192941;
+  color: #fff0c5;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #80602c;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin-top: 18px;
+  color: #9eafbd;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.back {
+  display: inline-block;
+  margin-top: 20px;
+  color: #b8c2d4;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.back:hover {
+  color: #f5ca70;
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 12px 8px;
+  }
+
+  .container {
+    padding: 16px 12px;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  .score-box {
+    padding: 10px 5px;
+  }
+
+  .score-box strong {
+    font-size: 19px;
+  }
+
+  button {
+    padding: 11px 17px;
+  }
+}
+</style>
 </head>
+
 <body>
-  <main class="game">
-    <h1>snake</h1>
-    <p class="description">
-      먹이를 먹으며 뱀의 길이를 늘려 보세요!<br>
-      벽이나 자신의 몸에 부딪히면 게임이 끝납니다.
-    </p>
 
-    <div class="stats">
-      <div class="stat">
-        <small>점수</small>
-        <strong id="score">0</strong>
+<div class="container">
+
+  <div class="eyebrow">CASINO MINI GAME 05</div>
+
+  <h1>SNAKE</h1>
+
+  <div class="description">
+    먹이를 먹고 더 길게 성장하세요!
+  </div>
+
+  <div class="scoreboard">
+
+    <div class="score-box">
+      <small>SCORE</small>
+      <strong id="score">0</strong>
+    </div>
+
+    <div class="score-box">
+      <small>BEST</small>
+      <strong id="best">0</strong>
+    </div>
+
+  </div>
+
+  <div class="game-wrap">
+
+    <canvas
+      id="game"
+      width="520"
+      height="520">
+    </canvas>
+
+    <div class="game-overlay" id="overlay">
+
+      <div class="overlay-title" id="overlayTitle">
+        SNAKE
       </div>
-      <div class="stat">
-        <small>최고 기록</small>
-        <strong id="best">0</strong>
+
+      <div class="overlay-description" id="overlayDescription">
+        시작 버튼을 눌러 게임을 시작하세요.
       </div>
+
     </div>
 
-    <div class="board-wrap">
-      <canvas id="board" width="400" height="400"></canvas>
-    </div>
+  </div>
 
-    <div class="message" id="message">
-      시작 버튼을 눌러 주세요!
-    </div>
+  <div class="message" id="message">
+    화면을 드래그해서 뱀의 방향을 바꿔보세요.
+  </div>
 
-    <div class="main-buttons">
-      <button id="start">게임 시작</button>
-      <button id="pause">일시정지</button>
-    </div>
+  <div class="buttons">
 
-    <div class="controls">
-      <button class="empty"> </button>
-      <button data-dir="up">▲</button>
-      <button class="empty"> </button>
-      <button data-dir="left">◀</button>
-      <button data-dir="down">▼</button>
-      <button data-dir="right">▶</button>
-    </div>
+    <button id="startButton">
+      게임 시작
+    </button>
 
-    <a class="back" href="../index.html">← 카지노 메인으로</a>
-  </main>
+    <button id="pauseButton" disabled>
+      일시정지
+    </button>
 
-  <script>
-    const canvas = document.getElementById("board");
-    const ctx = canvas.getContext("2d");
+    <button id="resetButton">
+      다시 시작
+    </button>
 
-    const scoreText = document.getElementById("score");
-    const bestText = document.getElementById("best");
-    const message = document.getElementById("message");
-    const startButton = document.getElementById("start");
-    const pauseButton = document.getElementById("pause");
+  </div>
 
-    const CELL = 20;
-    const COUNT = 20;
+  <div class="hint">
+    PC: 마우스 드래그 또는 방향키<br>
+    휴대폰: 화면을 원하는 방향으로 밀어주세요.
+  </div>
 
-    let snake;
-    let food;
-    let direction;
-    let nextDirection;
-    let score = 0;
-    let timer = null;
-    let running = false;
-    let paused = false;
-    let best = 0;
+  <a class="back" href="../index.html">
+    ← 카지노 메인으로 돌아가기
+  </a>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+
+  const scoreText = document.getElementById("score");
+  const bestText = document.getElementById("best");
+
+  const message = document.getElementById("message");
+
+  const startButton = document.getElementById("startButton");
+  const pauseButton = document.getElementById("pauseButton");
+  const resetButton = document.getElementById("resetButton");
+
+  const overlay = document.getElementById("overlay");
+  const overlayTitle = document.getElementById("overlayTitle");
+  const overlayDescription =
+    document.getElementById("overlayDescription");
+
+  // 게임판 설정
+  const CELL = 20;
+  const COLS = canvas.width / CELL;
+  const ROWS = canvas.height / CELL;
+
+  // 속도 설정
+  const INITIAL_SPEED = 150;
+  const MIN_SPEED = 65;
+  const SPEED_DECREASE = 4;
+
+  let snake = [];
+  let food = {};
+
+  let direction = { x: 1, y: 0 };
+  let nextDirection = { x: 1, y: 0 };
+
+  let score = 0;
+  let best = 0;
+
+  let speed = INITIAL_SPEED;
+  let timer = null;
+
+  let gameState = "ready";
+  let turnLocked = false;
+
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let activePointer = false;
+
+  // 최고 기록 불러오기
+  try {
+    best = Number(
+      localStorage.getItem("casinoSnakeBest")
+    ) || 0;
+  } catch (error) {
+    best = 0;
+  }
+
+  bestText.textContent = best;
+
+  // 뱀 초기화
+  function createSnake() {
+    const centerX = Math.floor(COLS / 2);
+    const centerY = Math.floor(ROWS / 2);
+
+    snake = [
+      { x: centerX, y: centerY },
+      { x: centerX - 1, y: centerY },
+      { x: centerX - 2, y: centerY },
+      { x: centerX - 3, y: centerY }
+    ];
+
+    direction = { x: 1, y: 0 };
+    nextDirection = { x: 1, y: 0 };
+
+    turnLocked = false;
+  }
+
+  // 먹이 생성
+  function createFood() {
+    const emptyCells = [];
+
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+
+        const occupied = snake.some(segment =>
+          segment.x === x && segment.y === y
+        );
+
+        if (!occupied) {
+          emptyCells.push({ x, y });
+        }
+      }
+    }
+
+    if (emptyCells.length === 0) {
+      finishGame(true);
+      return;
+    }
+
+    const randomIndex =
+      Math.floor(Math.random() * emptyCells.length);
+
+    food = emptyCells[randomIndex];
+  }
+
+  // 점수 표시
+  function updateScore() {
+    scoreText.textContent = score;
+    bestText.textContent = best;
+  }
+
+  // 최고 기록 저장
+  function saveBest() {
+    if (score <= best) return;
+
+    best = score;
 
     try {
-      best = Number(localStorage.getItem("snakeBest")) || 0;
+      localStorage.setItem(
+        "casinoSnakeBest",
+        String(best)
+      );
     } catch (error) {
-      best = 0;
+      console.warn("기록 저장 오류:", error);
     }
 
-    bestText.textContent = best;
+    updateScore();
+  }
 
-    function resetGame() {
-      clearInterval(timer);
-      timer = null;
+  // 둥근 사각형
+  function roundedRect(x, y, width, height, radius) {
+    ctx.beginPath();
 
-      snake = [
-        { x: 10, y: 10 },
-        { x: 9, y: 10 },
-        { x: 8, y: 10 }
-      ];
+    ctx.roundRect(
+      x,
+      y,
+      width,
+      height,
+      radius
+    );
 
-      direction = { x: 1, y: 0 };
-      nextDirection = { x: 1, y: 0 };
-      score = 0;
-      running = false;
-      paused = false;
+    ctx.fill();
+  }
 
-      scoreText.textContent = score;
-      message.textContent = "시작 버튼을 눌러 주세요!";
-      startButton.textContent = "게임 시작";
-      pauseButton.textContent = "일시정지";
+  // 게임판 배경
+  function drawBackground() {
+    ctx.fillStyle = "#17251e";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      createFood();
-      draw();
+    // 바둑판처럼 은은한 잔디 타일
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+
+        if ((x + y) % 2 === 0) {
+          ctx.fillStyle = "rgba(100, 160, 80, 0.055)";
+
+          ctx.fillRect(
+            x * CELL,
+            y * CELL,
+            CELL,
+            CELL
+          );
+        }
+      }
     }
 
-    function createFood() {
-      let position;
+    // 미세한 격자
+    ctx.strokeStyle = "rgba(210, 230, 180, 0.045)";
+    ctx.lineWidth = 1;
 
-      do {
-        position = {
-          x: Math.floor(Math.random() * COUNT),
-          y: Math.floor(Math.random() * COUNT)
-        };
-      } while (
-        snake.some(part =>
-          part.x === position.x && part.y === position.y
-        )
+    for (let x = 0; x <= canvas.width; x += CELL) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+
+    for (let y = 0; y <= canvas.height; y += CELL) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+  }
+
+  // 사과 그리기
+  function drawFood() {
+    const x = food.x * CELL + CELL / 2;
+    const y = food.y * CELL + CELL / 2;
+
+    // 사과 그림자
+    ctx.beginPath();
+    ctx.arc(x, y + 3, 7, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fill();
+
+    // 사과 몸통
+    ctx.beginPath();
+
+    ctx.arc(
+      x - 3,
+      y,
+      7,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.arc(
+      x + 3,
+      y,
+      7,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fillStyle = "#f04444";
+    ctx.fill();
+
+    // 사과 윗부분
+    ctx.beginPath();
+    ctx.arc(x, y - 4, 4, Math.PI, 0);
+    ctx.fillStyle = "#ff6868";
+    ctx.fill();
+
+    // 줄기
+    ctx.beginPath();
+    ctx.moveTo(x, y - 8);
+    ctx.lineTo(x + 1, y - 13);
+
+    ctx.strokeStyle = "#8d5a2b";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 잎
+    ctx.beginPath();
+
+    ctx.ellipse(
+      x + 4,
+      y - 11,
+      4,
+      2,
+      -0.5,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fillStyle = "#8dd66d";
+    ctx.fill();
+  }
+
+  // 뱀 몸통
+  function drawSnakeBody() {
+    for (let i = snake.length - 1; i >= 1; i--) {
+      const segment = snake[i];
+
+      const x = segment.x * CELL;
+      const y = segment.y * CELL;
+
+      // 몸통
+      ctx.fillStyle = i % 2 === 0
+        ? "#369d55"
+        : "#43b765";
+
+      roundedRect(
+        x + 2,
+        y + 2,
+        CELL - 4,
+        CELL - 4,
+        6
       );
 
-      food = position;
+      // 은은한 빛
+      ctx.fillStyle = "rgba(195,255,175,0.23)";
+
+      roundedRect(
+        x + 5,
+        y + 4,
+        7,
+        3,
+        2
+      );
+    }
+  }
+
+  // 뱀 머리
+  function drawSnakeHead() {
+    const head = snake[0];
+
+    const x = head.x * CELL;
+    const y = head.y * CELL;
+
+    // 머리 그림자
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+
+    roundedRect(
+      x + 1,
+      y + 3,
+      CELL - 2,
+      CELL - 2,
+      7
+    );
+
+    // 머리 몸통
+    const gradient = ctx.createLinearGradient(
+      x,
+      y,
+      x + CELL,
+      y + CELL
+    );
+
+    gradient.addColorStop(0, "#a5f17c");
+    gradient.addColorStop(1, "#54c768");
+
+    ctx.fillStyle = gradient;
+
+    roundedRect(
+      x + 1,
+      y + 1,
+      CELL - 2,
+      CELL - 2,
+      7
+    );
+
+    // 눈 위치 설정
+    let eyes;
+
+    if (direction.x === 1) {
+      eyes = [
+        [0.68, 0.32],
+        [0.68, 0.68]
+      ];
+    } else if (direction.x === -1) {
+      eyes = [
+        [0.32, 0.32],
+        [0.32, 0.68]
+      ];
+    } else if (direction.y === -1) {
+      eyes = [
+        [0.32, 0.32],
+        [0.68, 0.32]
+      ];
+    } else {
+      eyes = [
+        [0.32, 0.68],
+        [0.68, 0.68]
+      ];
     }
 
-    function draw() {
-      ctx.fillStyle = "#101d30";
-      ctx.fillRect(0, 0, 400, 400);
+    eyes.forEach(([ex, ey]) => {
+      const eyeX = x + CELL * ex;
+      const eyeY = y + CELL * ey;
 
-      // 격자
-      ctx.strokeStyle = "#1c2b40";
-      ctx.lineWidth = 1;
-
-      for (let i = 0; i <= COUNT; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * CELL, 0);
-        ctx.lineTo(i * CELL, 400);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(0, i * CELL);
-        ctx.lineTo(400, i * CELL);
-        ctx.stroke();
-      }
-
-      // 먹이
-      ctx.fillStyle = "#ef6262";
+      // 눈 흰자
       ctx.beginPath();
       ctx.arc(
-        food.x * CELL + CELL / 2,
-        food.y * CELL + CELL / 2,
-        8,
+        eyeX,
+        eyeY,
+        3.2,
         0,
         Math.PI * 2
       );
+
+      ctx.fillStyle = "#ffffff";
       ctx.fill();
 
-      // 뱀
-      snake.forEach((part, index) => {
-        ctx.fillStyle = index === 0 ? "#e9c76b" : "#38b879";
-        ctx.beginPath();
-        ctx.roundRect(
-          part.x * CELL + 2,
-          part.y * CELL + 2,
-          CELL - 4,
-          CELL - 4,
-          5
-        );
-        ctx.fill();
-      });
-    }
-
-    function setDirection(name) {
-      const directions = {
-        up: { x: 0, y: -1 },
-        down: { x: 0, y: 1 },
-        left: { x: -1, y: 0 },
-        right: { x: 1, y: 0 }
-      };
-
-      const selected = directions[name];
-      if (!selected) return;
-
-      if (
-        selected.x === -direction.x &&
-        selected.y === -direction.y
-      ) return;
-
-      nextDirection = selected;
-    }
-
-    function move() {
-      direction = nextDirection;
-
-      const head = {
-        x: snake[0].x + direction.x,
-        y: snake[0].y + direction.y
-      };
-
-      const willEat =
-        head.x === food.x && head.y === food.y;
-
-      const bodyToCheck = willEat
-        ? snake
-        : snake.slice(0, -1);
-
-      const hitWall =
-        head.x < 0 || head.x >= COUNT ||
-        head.y < 0 || head.y >= COUNT;
-
-      const hitBody = bodyToCheck.some(part =>
-        part.x === head.x && part.y === head.y
+      // 검은 눈동자
+      ctx.beginPath();
+      ctx.arc(
+        eyeX,
+        eyeY,
+        1.7,
+        0,
+        Math.PI * 2
       );
 
-      if (hitWall || hitBody) {
-        endGame();
-        return;
-      }
+      ctx.fillStyle = "#15371b";
+      ctx.fill();
+    });
+  }
 
-      snake.unshift(head);
+  // 전체 화면 그리기
+  function draw() {
+    drawBackground();
+    drawFood();
+    drawSnakeBody();
+    drawSnakeHead();
+  }
 
-      if (willEat) {
-        score += 10;
-        scoreText.textContent = score;
+  // 방향 변경
+  function changeDirection(newDirection) {
+    if (gameState !== "running") return;
+    if (turnLocked) return;
 
-        if (score > best) {
-          best = score;
-          bestText.textContent = best;
-
-          try {
-            localStorage.setItem("snakeBest", String(best));
-          } catch (error) {
-            // 저장이 제한된 환경에서는 현재 기록만 표시합니다.
-          }
-        }
-
-        createFood();
-      } else {
-        snake.pop();
-      }
-
-      draw();
+    // 반대 방향으로 이동 금지
+    if (
+      newDirection.x === -direction.x &&
+      newDirection.y === -direction.y
+    ) {
+      return;
     }
 
-    function startGame() {
-      if (running && !paused) return;
+    nextDirection = newDirection;
+    turnLocked = true;
+  }
 
-      if (paused) {
-        paused = false;
-        running = true;
-        message.textContent = "게임 진행 중!";
-        pauseButton.textContent = "일시정지";
-        return;
-      }
+  // 실제 게임 진행
+  function tick() {
+    if (gameState !== "running") return;
 
+    direction = { ...nextDirection };
+    turnLocked = false;
+
+    const head = {
+      x: snake[0].x + direction.x,
+      y: snake[0].y + direction.y
+    };
+
+    const eating =
+      head.x === food.x &&
+      head.y === food.y;
+
+    // 벽 충돌
+    if (
+      head.x < 0 ||
+      head.x >= COLS ||
+      head.y < 0 ||
+      head.y >= ROWS
+    ) {
+      finishGame(false);
+      return;
+    }
+
+    // 자기 몸 충돌
+    // 먹지 않는 경우 마지막 꼬리는 이동하므로 검사에서 제외
+    const bodyToCheck = eating
+      ? snake
+      : snake.slice(0, -1);
+
+    const hitBody = bodyToCheck.some(segment =>
+      segment.x === head.x &&
+      segment.y === head.y
+    );
+
+    if (hitBody) {
+      finishGame(false);
+      return;
+    }
+
+    // 머리 추가
+    snake.unshift(head);
+
+    // 먹이를 먹으면 길이 증가
+    if (eating) {
+      score += 10;
+
+      speed = Math.max(
+        MIN_SPEED,
+        INITIAL_SPEED -
+        Math.floor(score / 10) * SPEED_DECREASE
+      );
+
+      saveBest();
+      updateScore();
+
+      createFood();
+
+      if (gameState !== "running") return;
+
+      message.textContent =
+        "GOOD! 뱀이 더 길어졌습니다!";
+
+      // 속도 변경
+      startTimer();
+    } else {
+      // 먹이를 먹지 않으면 꼬리 제거
+      snake.pop();
+    }
+
+    draw();
+  }
+
+  // 게임 타이머
+  function startTimer() {
+    clearInterval(timer);
+
+    timer = setInterval(tick, speed);
+  }
+
+  // 게임 시작
+  function startGame() {
+    if (gameState === "over") {
       resetGame();
-      running = true;
-      message.textContent = "먹이를 먹으세요!";
-      startButton.textContent = "새 게임";
-      timer = setInterval(move, 130);
     }
 
-    function togglePause() {
-      if (!running) return;
+    if (gameState === "running") return;
 
-      if (paused) {
-        paused = false;
-        timer = setInterval(move, 130);
-        message.textContent = "게임 진행 중!";
-        pauseButton.textContent = "일시정지";
-      } else {
-        paused = true;
-        clearInterval(timer);
-        timer = null;
-        message.textContent = "일시정지 중";
-        pauseButton.textContent = "계속하기";
-      }
-    }
+    gameState = "running";
 
-    function endGame() {
+    overlay.hidden = true;
+
+    message.textContent =
+      "먹이를 먹고 최고 기록에 도전하세요!";
+
+    startButton.textContent = "게임 진행 중";
+    startButton.disabled = true;
+
+    pauseButton.disabled = false;
+    pauseButton.textContent = "일시정지";
+
+    startTimer();
+  }
+
+  // 일시정지
+  function pauseGame() {
+    if (gameState === "running") {
+      gameState = "paused";
+
       clearInterval(timer);
-      timer = null;
-      running = false;
-      paused = false;
 
-      message.textContent = "게임 종료! 최종 점수: " + score;
-      startButton.textContent = "다시 시작";
-      pauseButton.textContent = "일시정지";
+      overlay.hidden = false;
+      overlayTitle.textContent = "PAUSED";
+      overlayDescription.textContent =
+        "게임이 일시정지되었습니다.";
+
+      message.textContent = "일시정지 상태";
+
+      pauseButton.textContent = "계속하기";
+      return;
     }
 
-    document.addEventListener("keydown", event => {
-      const keys = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-        w: "up",
-        s: "down",
-        a: "left",
-        d: "right"
-      };
+    if (gameState === "paused") {
+      gameState = "running";
 
-      if (keys[event.key]) {
-        event.preventDefault();
-        setDirection(keys[event.key]);
-      }
-    });
+      overlay.hidden = true;
 
-    document.querySelectorAll("[data-dir]").forEach(button => {
-      button.addEventListener("pointerdown", event => {
-        event.preventDefault();
-        setDirection(button.dataset.dir);
+      message.textContent =
+        "게임을 계속 진행합니다!";
+
+      pauseButton.textContent = "일시정지";
+
+      startTimer();
+    }
+  }
+
+  // 게임 종료
+  function finishGame(won) {
+    gameState = "over";
+
+    clearInterval(timer);
+
+    saveBest();
+
+    overlay.hidden = false;
+
+    if (won) {
+      overlayTitle.textContent = "YOU WIN!";
+      overlayDescription.textContent =
+        "게임판의 모든 공간을 채웠습니다!";
+      message.textContent = "축하합니다!";
+    } else {
+      overlayTitle.textContent = "GAME OVER";
+      overlayDescription.textContent =
+        `최종 점수: ${score}점`;
+      message.textContent =
+        "뱀이 벽이나 자기 몸에 부딪혔습니다.";
+    }
+
+    startButton.textContent = "다시 도전";
+    startButton.disabled = false;
+
+    pauseButton.disabled = true;
+  }
+
+  // 게임 초기화
+  function resetGame() {
+    clearInterval(timer);
+
+    score = 0;
+    speed = INITIAL_SPEED;
+
+    gameState = "ready";
+
+    createSnake();
+    createFood();
+
+    updateScore();
+    draw();
+
+    overlay.hidden = false;
+
+    overlayTitle.textContent = "SNAKE";
+    overlayDescription.textContent =
+      "시작 버튼을 눌러 게임을 시작하세요.";
+
+    message.textContent =
+      "화면을 드래그해서 뱀의 방향을 바꿔보세요.";
+
+    startButton.textContent = "게임 시작";
+    startButton.disabled = false;
+
+    pauseButton.textContent = "일시정지";
+    pauseButton.disabled = true;
+  }
+
+  // 방향키 및 WASD
+  document.addEventListener("keydown", event => {
+    const keys = {
+      ArrowUp: { x: 0, y: -1 },
+      ArrowDown: { x: 0, y: 1 },
+      ArrowLeft: { x: -1, y: 0 },
+      ArrowRight: { x: 1, y: 0 },
+      w: { x: 0, y: -1 },
+      s: { x: 0, y: 1 },
+      a: { x: -1, y: 0 },
+      d: { x: 1, y: 0 }
+    };
+
+    const key = keys[event.key] || keys[event.key.toLowerCase()];
+
+    if (key) {
+      event.preventDefault();
+      changeDirection(key);
+    }
+
+    if (
+      event.code === "Space" &&
+      gameState !== "over"
+    ) {
+      event.preventDefault();
+      pauseGame();
+    }
+  });
+
+  // 드래그 시작
+  canvas.addEventListener("pointerdown", event => {
+    activePointer = true;
+
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+
+    canvas.setPointerCapture(event.pointerId);
+  });
+
+  // 드래그 종료 후 이동 방향 계산
+  canvas.addEventListener("pointerup", event => {
+    if (!activePointer) return;
+
+    activePointer = false;
+
+    const dx = event.clientX - dragStartX;
+    const dy = event.clientY - dragStartY;
+
+    const threshold = 15;
+
+    if (
+      Math.max(Math.abs(dx), Math.abs(dy)) < threshold
+    ) {
+      return;
+    }
+
+    // 가로 또는 세로 중 더 큰 움직임을 기준으로 방향 결정
+    if (Math.abs(dx) > Math.abs(dy)) {
+      changeDirection({
+        x: dx > 0 ? 1 : -1,
+        y: 0
       });
-    });
+    } else {
+      changeDirection({
+        x: 0,
+        y: dy > 0 ? 1 : -1
+      });
+    }
+  });
 
-    startButton.addEventListener("click", startGame);
-    pauseButton.addEventListener("click", togglePause);
+  canvas.addEventListener("pointercancel", () => {
+    activePointer = false;
+  });
 
-    resetGame();
-  </script>
+  // 버튼 연결
+  startButton.addEventListener("click", startGame);
+
+  pauseButton.addEventListener("click", pauseGame);
+
+  resetButton.addEventListener("click", resetGame);
+
+  // 최초 실행
+  resetGame();
+
+})();
+</script>
+
 </body>
 </html>
