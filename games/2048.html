@@ -19,7 +19,7 @@ body {
   font-family: Arial, sans-serif;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px;
 }
 
@@ -27,6 +27,7 @@ body {
   width: 100%;
   max-width: 460px;
   text-align: center;
+  margin: auto;
 }
 
 h1 {
@@ -75,6 +76,13 @@ h1 {
   border-radius: 15px;
   padding: 10px;
   touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.board:active {
+  cursor: grabbing;
 }
 
 .cell {
@@ -101,34 +109,85 @@ h1 {
 .v1024 { background: #e6a91d; }
 .v2048 { background: #f5ca70; color: #563b14; }
 
-.controls {
-  display: grid;
-  grid-template-columns: repeat(3, 65px);
-  justify-content: center;
-  gap: 8px;
-  margin: 20px auto;
+.drag-hint {
+  color: #b8c2d4;
+  font-size: 13px;
+  margin: 13px 0 18px;
 }
 
-.controls button,
-.action {
+/* 최고 기록 TOP 5 */
+.records {
+  background: #17253a;
   border: 1px solid #a68b53;
-  background: #263954;
-  color: #f8e8b8;
-  border-radius: 10px;
-  padding: 14px;
-  font-size: 20px;
-  cursor: pointer;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 18px;
+  text-align: left;
 }
 
-.controls button:active,
-.action:active {
-  background: #8a652b;
+.records-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.up { grid-column: 2; }
-.left { grid-column: 1; }
-.down { grid-column: 2; }
-.right { grid-column: 3; }
+.records-header h2 {
+  font-size: 16px;
+  margin: 0;
+  letter-spacing: 2px;
+  color: #f5ca70;
+}
+
+.records-header span {
+  font-size: 11px;
+  color: #b8c2d4;
+}
+
+.record-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.record-item {
+  display: grid;
+  grid-template-columns: 35px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 5px;
+  border-bottom: 1px solid rgba(196, 181, 143, 0.15);
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-rank {
+  color: #f5ca70;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.record-date {
+  color: #aebbd0;
+  font-size: 12px;
+}
+
+.record-score {
+  color: #fff0bb;
+  font-size: 17px;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty-record {
+  color: #9ba9bc;
+  text-align: center;
+  font-size: 13px;
+  padding: 15px 5px;
+}
 
 .actions {
   display: flex;
@@ -138,7 +197,17 @@ h1 {
 }
 
 .action {
+  border: 1px solid #a68b53;
+  background: #263954;
+  color: #f8e8b8;
+  border-radius: 10px;
+  padding: 14px 24px;
   font-size: 15px;
+  cursor: pointer;
+}
+
+.action:active {
+  background: #8a652b;
 }
 
 .message {
@@ -146,6 +215,7 @@ h1 {
   margin: 15px 0;
   color: #f5ca70;
   font-weight: bold;
+  line-height: 1.5;
 }
 
 .back {
@@ -156,13 +226,28 @@ h1 {
 }
 
 @media (max-width: 380px) {
-  .board { gap: 6px; padding: 7px; }
-  .cell { font-size: 22px; }
+  body {
+    padding: 15px 12px;
+  }
+
+  .board {
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .cell {
+    font-size: 22px;
+  }
+
+  h1 {
+    font-size: 42px;
+  }
 }
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
   <h1>2048</h1>
@@ -173,6 +258,7 @@ h1 {
       <span>SCORE</span>
       <strong id="score">0</strong>
     </div>
+
     <div class="score-box">
       <span>BEST</span>
       <strong id="best">0</strong>
@@ -181,74 +267,243 @@ h1 {
 
   <div class="board" id="board"></div>
 
+  <div class="drag-hint">
+    보드를 원하는 방향으로 드래그하세요
+  </div>
+
+  <section class="records">
+    <div class="records-header">
+      <h2>BEST RECORDS</h2>
+      <span>TOP 5</span>
+    </div>
+
+    <ol class="record-list" id="recordList"></ol>
+  </section>
+
   <div class="message" id="message">
     같은 숫자를 합쳐 2048을 만들어 보세요!
   </div>
 
-  <div class="controls">
-    <button class="up" data-dir="up">▲</button>
-    <button class="left" data-dir="left">◀</button>
-    <button class="down" data-dir="down">▼</button>
-    <button class="right" data-dir="right">▶</button>
-  </div>
-
   <div class="actions">
     <button class="action" id="restart">새 게임</button>
-    <button class="action" id="undo">한 수 되돌리기</button>
   </div>
 
-  <a class="back" href="../index.html">← 카지노 메인으로</a>
+  <a class="back" href="../index.html">
+    ← 카지노 메인으로
+  </a>
+
 </div>
 
 <script>
+"use strict";
+
 const boardElement = document.getElementById("board");
 const scoreElement = document.getElementById("score");
 const bestElement = document.getElementById("best");
 const messageElement = document.getElementById("message");
+const recordListElement = document.getElementById("recordList");
+
+const RECORDS_KEY = "casino2048BestScores";
+const LEGACY_BEST_KEY = "casino2048Best";
 
 let board;
 let score;
+let records = [];
 let best = 0;
-let previous = null;
 let gameOver = false;
+let hasMoved = false;
+let recordSaved = false;
 
-try {
-  best = Number(localStorage.getItem("casino2048Best")) || 0;
-} catch (e) {}
+// 기존 최고 기록을 유지하면서 TOP 5 불러오기
+function loadRecords() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(RECORDS_KEY) || "[]"
+    );
 
+    if (Array.isArray(saved)) {
+      records = saved
+        .filter(item =>
+          item &&
+          Number.isFinite(Number(item.score)) &&
+          Number(item.score) >= 0
+        )
+        .map(item => ({
+          score: Math.floor(Number(item.score)),
+          date: typeof item.date === "string"
+            ? item.date
+            : "이전 기록"
+        }));
+    }
+
+    // 기존 버전의 BEST 기록 가져오기
+    const oldBest =
+      Number(localStorage.getItem(LEGACY_BEST_KEY)) || 0;
+
+    const currentBest = records.length
+      ? Math.max(...records.map(item => item.score))
+      : 0;
+
+    if (oldBest > currentBest && oldBest > 0) {
+      records.push({
+        score: oldBest,
+        date: "이전 최고 기록"
+      });
+    }
+
+  } catch (error) {
+    console.warn("기록을 불러올 수 없습니다.", error);
+    records = [];
+  }
+
+  sortRecords();
+  saveRecords();
+}
+
+// 기록 정렬
+function sortRecords() {
+  records.sort((a, b) => b.score - a.score);
+  records = records.slice(0, 5);
+}
+
+// 기록 저장
+function saveRecords() {
+  sortRecords();
+
+  best = records.length > 0
+    ? records[0].score
+    : 0;
+
+  try {
+    localStorage.setItem(
+      RECORDS_KEY,
+      JSON.stringify(records)
+    );
+
+    localStorage.setItem(
+      LEGACY_BEST_KEY,
+      String(best)
+    );
+
+  } catch (error) {
+    console.warn("기록을 저장할 수 없습니다.", error);
+  }
+
+  renderRecords();
+}
+
+// TOP 5 화면 표시
+function renderRecords() {
+  recordListElement.replaceChildren();
+
+  best = records.length > 0
+    ? records[0].score
+    : 0;
+
+  bestElement.textContent = best;
+
+  if (records.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "empty-record";
+    empty.textContent = "아직 기록이 없습니다.";
+    recordListElement.appendChild(empty);
+    return;
+  }
+
+  records.forEach((record, index) => {
+    const item = document.createElement("li");
+    item.className = "record-item";
+
+    const rank = document.createElement("span");
+    rank.className = "record-rank";
+    rank.textContent = `${index + 1}위`;
+
+    const date = document.createElement("span");
+    date.className = "record-date";
+    date.textContent = record.date;
+
+    const scoreText = document.createElement("strong");
+    scoreText.className = "record-score";
+    scoreText.textContent =
+      record.score.toLocaleString("ko-KR");
+
+    item.append(rank, date, scoreText);
+    recordListElement.appendChild(item);
+  });
+}
+
+// 새로운 기록 등록
+function saveCurrentRecord() {
+  if (recordSaved || !hasMoved) return;
+
+  recordSaved = true;
+
+  const today = new Date().toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+
+  records.push({
+    score: score,
+    date: today
+  });
+
+  saveRecords();
+}
+
+// 새 게임
 function newGame() {
-  board = Array.from({length: 4}, () => Array(4).fill(0));
+  board = Array.from(
+    { length: 4 },
+    () => Array(4).fill(0)
+  );
+
   score = 0;
-  previous = null;
   gameOver = false;
-  messageElement.textContent = "같은 숫자를 합쳐 2048을 만들어 보세요!";
+  hasMoved = false;
+  recordSaved = false;
+
+  messageElement.textContent =
+    "같은 숫자를 합쳐 2048을 만들어 보세요!";
+
   addTile();
   addTile();
   render();
 }
 
+// 새로운 숫자 생성
 function addTile() {
   const empty = [];
 
   board.forEach((row, r) => {
     row.forEach((value, c) => {
-      if (value === 0) empty.push([r, c]);
+      if (value === 0) {
+        empty.push([r, c]);
+      }
     });
   });
 
   if (!empty.length) return;
 
-  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+  const [r, c] =
+    empty[Math.floor(Math.random() * empty.length)];
+
   board[r][c] = Math.random() < 0.9 ? 2 : 4;
 }
 
+// 게임판 그리기
 function render() {
   boardElement.innerHTML = "";
 
   board.flat().forEach(value => {
     const cell = document.createElement("div");
-    cell.className = "cell" + (value ? " v" + value : "");
+
+    cell.className =
+      "cell" + (value ? " v" + value : "");
+
     cell.textContent = value || "";
+
     boardElement.appendChild(cell);
   });
 
@@ -256,14 +511,16 @@ function render() {
   bestElement.textContent = best;
 }
 
+// 한 줄 밀기 및 합치기
 function slide(line) {
-  let values = line.filter(v => v !== 0);
-  let result = [];
+  const values = line.filter(v => v !== 0);
+  const result = [];
   let gained = 0;
 
   for (let i = 0; i < values.length; i++) {
     if (values[i] === values[i + 1]) {
       const merged = values[i] * 2;
+
       result.push(merged);
       gained += merged;
       i++;
@@ -272,11 +529,14 @@ function slide(line) {
     }
   }
 
-  while (result.length < 4) result.push(0);
+  while (result.length < 4) {
+    result.push(0);
+  }
 
-  return {result, gained};
+  return { result, gained };
 }
 
+// 이동
 function move(direction) {
   if (gameOver) return;
 
@@ -319,100 +579,103 @@ function move(direction) {
 
   if (!changed) return;
 
-  previous = {
-    board: before,
-    score: score
-  };
-
+  hasMoved = true;
   score += gained;
-
-  if (score > best) {
-    best = score;
-    try {
-      localStorage.setItem("casino2048Best", best);
-    } catch (e) {}
-  }
 
   addTile();
   render();
 
   if (board.flat().includes(2048)) {
-    messageElement.textContent = "축하합니다! 2048 달성!";
+    messageElement.textContent =
+      "축하합니다! 2048 달성!";
   }
 
   if (!canMove()) {
     gameOver = true;
-    messageElement.textContent = "게임 종료! 새 게임을 눌러 다시 도전하세요.";
+
+    saveCurrentRecord();
+
+    messageElement.textContent =
+      "게임 종료! 새 게임을 눌러 다시 도전하세요.";
+
+    render();
   }
 }
 
+// 추가 이동 가능 여부 확인
 function canMove() {
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < 4; c++) {
       if (board[r][c] === 0) return true;
 
-      if (c < 3 && board[r][c] === board[r][c + 1]) return true;
-      if (r < 3 && board[r][c] === board[r + 1][c]) return true;
+      if (
+        c < 3 &&
+        board[r][c] === board[r][c + 1]
+      ) return true;
+
+      if (
+        r < 3 &&
+        board[r][c] === board[r + 1][c]
+      ) return true;
     }
   }
 
   return false;
 }
 
-function undo() {
-  if (!previous) return;
+// 마우스 및 터치 드래그 조작
+let dragStartX = 0;
+let dragStartY = 0;
+let activePointerId = null;
 
-  board = previous.board;
-  score = previous.score;
-  previous = null;
-  gameOver = false;
-  messageElement.textContent = "이전 상태로 되돌렸습니다.";
-  render();
-}
-
-document.addEventListener("keydown", event => {
-  const keys = {
-    ArrowUp: "up",
-    ArrowDown: "down",
-    ArrowLeft: "left",
-    ArrowRight: "right"
-  };
-
-  if (keys[event.key]) {
-    event.preventDefault();
-    move(keys[event.key]);
+boardElement.addEventListener("pointerdown", event => {
+  if (event.pointerType === "mouse" && event.button !== 0) {
+    return;
   }
+
+  dragStartX = event.clientX;
+  dragStartY = event.clientY;
+  activePointerId = event.pointerId;
+
+  boardElement.setPointerCapture(event.pointerId);
 });
 
-document.querySelectorAll("[data-dir]").forEach(button => {
-  button.addEventListener("click", () => move(button.dataset.dir));
-});
+boardElement.addEventListener("pointerup", event => {
+  if (activePointerId !== event.pointerId) return;
 
-let touchStartX = 0;
-let touchStartY = 0;
+  const dx = event.clientX - dragStartX;
+  const dy = event.clientY - dragStartY;
 
-boardElement.addEventListener("touchstart", event => {
-  touchStartX = event.changedTouches[0].clientX;
-  touchStartY = event.changedTouches[0].clientY;
-}, {passive: true});
+  activePointerId = null;
 
-boardElement.addEventListener("touchend", event => {
-  const dx = event.changedTouches[0].clientX - touchStartX;
-  const dy = event.changedTouches[0].clientY - touchStartY;
+  const threshold = 25;
 
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < 25) return;
+  if (
+    Math.max(Math.abs(dx), Math.abs(dy)) < threshold
+  ) {
+    return;
+  }
 
   if (Math.abs(dx) > Math.abs(dy)) {
     move(dx > 0 ? "right" : "left");
   } else {
     move(dy > 0 ? "down" : "up");
   }
-}, {passive: true});
+});
 
-document.getElementById("restart").addEventListener("click", newGame);
-document.getElementById("undo").addEventListener("click", undo);
+boardElement.addEventListener("pointercancel", () => {
+  activePointerId = null;
+});
 
+// 새 게임 버튼
+document
+  .getElementById("restart")
+  .addEventListener("click", newGame);
+
+// 최초 실행
+loadRecords();
 newGame();
 </script>
+
 </body>
 </html>
