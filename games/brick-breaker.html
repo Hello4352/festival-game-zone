@@ -58,7 +58,7 @@ h1 {
 
 .score-box {
   flex: 1;
-  padding: 12px;
+  padding: 12px 5px;
   border: 1px solid #9b7840;
   border-radius: 12px;
   background: #192941;
@@ -68,6 +68,7 @@ h1 {
   display: block;
   color: #aebbd0;
   margin-bottom: 6px;
+  font-size: 12px;
 }
 
 .score-box strong {
@@ -96,6 +97,7 @@ canvas {
   min-height: 25px;
   color: #e7c477;
   font-weight: bold;
+  line-height: 1.5;
 }
 
 button {
@@ -129,6 +131,20 @@ button:hover {
   line-height: 1.8;
   font-size: 14px;
 }
+
+@media (max-width: 380px) {
+  .container {
+    padding: 18px 12px;
+  }
+
+  .score-box {
+    padding: 10px 3px;
+  }
+
+  .score-box strong {
+    font-size: 19px;
+  }
+}
 </style>
 </head>
 
@@ -148,8 +164,13 @@ button:hover {
     </div>
 
     <div class="score-box">
+      <small>STAGE</small>
+      <strong id="stage">1</strong>
+    </div>
+
+    <div class="score-box">
       <small>LIFE</small>
-      <strong id="lives">3</strong>
+      <strong id="lives">1</strong>
     </div>
   </div>
 
@@ -165,13 +186,17 @@ button:hover {
   <button id="resetButton">다시 시작</button>
 
   <div class="instructions">
-    **조작 방법**<br>
+    <strong>조작 방법</strong><br>
     PC: 마우스로 패들 이동<br>
     휴대폰: 화면을 좌우로 드래그<br>
-    공이 바닥에 떨어지면 목숨이 줄어듭니다.
+    벽돌을 모두 깨면 다음 스테이지가 시작됩니다.<br>
+    라이프는 1개이며 공을 놓치면 게임이 종료됩니다.<br>
+    시간이 지날수록 공의 속도가 빨라집니다.
   </div>
 
-  <a class="back" href="../index.html">← 카지노 메인으로 돌아가기</a>
+  <a class="back" href="../index.html">
+    ← 카지노 메인으로 돌아가기
+  </a>
 </div>
 
 <script>
@@ -183,12 +208,18 @@ button:hover {
 
   const scoreText = document.getElementById("score");
   const livesText = document.getElementById("lives");
+  const stageText = document.getElementById("stage");
   const message = document.getElementById("message");
   const startButton = document.getElementById("startButton");
   const resetButton = document.getElementById("resetButton");
 
   const W = canvas.width;
   const H = canvas.height;
+
+  // 공 속도 설정
+  const INITIAL_BALL_SPEED = Math.hypot(3.5, 4);
+  const MAX_BALL_SPEED = 9.5;
+  const SPEED_INCREASE_PER_SECOND = 0.11;
 
   const paddle = {
     width: 105,
@@ -216,40 +247,112 @@ button:hover {
 
   let bricks = [];
   let score = 0;
-  let lives = 3;
+  let lives = 1;
+  let stage = 1;
+
   let running = false;
   let animationId = null;
   let pointerX = null;
 
+  let gameStartedAt = null;
+
+  // 현재 플레이 시간에 따른 공 속도
+  function getBallSpeed() {
+    if (gameStartedAt === null) {
+      return INITIAL_BALL_SPEED;
+    }
+
+    const elapsed =
+      (performance.now() - gameStartedAt) / 1000;
+
+    return Math.min(
+      INITIAL_BALL_SPEED +
+      elapsed * SPEED_INCREASE_PER_SECOND,
+      MAX_BALL_SPEED
+    );
+  }
+
+  // 공의 진행 방향을 유지하면서 속도 변경
+  function applyBallSpeed() {
+    const currentSpeed = Math.hypot(ball.dx, ball.dy);
+
+    if (currentSpeed === 0) return;
+
+    const targetSpeed = getBallSpeed();
+
+    ball.dx = (ball.dx / currentSpeed) * targetSpeed;
+    ball.dy = (ball.dy / currentSpeed) * targetSpeed;
+  }
+
+  // 스테이지별 벽돌 생성
   function createBricks() {
     bricks = [];
 
+    const pattern = (stage - 1) % 3;
+
     for (let row = 0; row < brickRows; row++) {
       for (let col = 0; col < brickColumns; col++) {
+
+        let shouldExist = true;
+
+        // 스테이지 1: 전체 벽돌
+        if (pattern === 0) {
+          shouldExist = true;
+        }
+
+        // 스테이지 2: 교차 배치
+        else if (pattern === 1) {
+          shouldExist =
+            row === 0 || (row + col) % 2 === 0;
+        }
+
+        // 스테이지 3: 테두리 배치
+        else if (pattern === 2) {
+          shouldExist =
+            row === 0 ||
+            row === brickRows - 1 ||
+            col === 0 ||
+            col === brickColumns - 1;
+        }
+
+        if (!shouldExist) continue;
+
         bricks.push({
           x: brickLeft + col * (brickWidth + brickGap),
           y: brickTop + row * (brickHeight + brickGap),
           width: brickWidth,
           height: brickHeight,
           alive: true,
-          color: row
+          color: (row + stage - 1) % 5
         });
       }
     }
   }
 
+  // 공 초기 위치 설정
   function resetBall() {
     ball.x = paddle.x + paddle.width / 2;
     ball.y = paddle.y - 15;
-    ball.dx = 3.5 * (Math.random() < 0.5 ? -1 : 1);
-    ball.dy = -4;
+
+    const direction =
+      Math.random() < 0.5 ? -1 : 1;
+
+    const speed = getBallSpeed();
+
+    ball.dx =
+      speed * (3.5 / INITIAL_BALL_SPEED) * direction;
+
+    ball.dy =
+      -speed * (4 / INITIAL_BALL_SPEED);
   }
 
   function updateScore() {
     scoreText.textContent = score;
     livesText.textContent = lives;
+    stageText.textContent = stage;
   }
 
+  // 배경
   function drawBackground() {
     ctx.fillStyle = "#08111f";
     ctx.fillRect(0, 0, W, H);
@@ -265,6 +368,7 @@ button:hover {
     }
   }
 
+  // 벽돌
   function drawBricks() {
     const colors = [
       "#e7c477",
@@ -278,6 +382,7 @@ button:hover {
       if (!brick.alive) return;
 
       ctx.fillStyle = colors[brick.color];
+
       ctx.beginPath();
       ctx.roundRect(
         brick.x,
@@ -286,12 +391,15 @@ button:hover {
         brick.height,
         5
       );
+
       ctx.fill();
     });
   }
 
+  // 패들
   function drawPaddle() {
     ctx.fillStyle = "#e7c477";
+
     ctx.beginPath();
     ctx.roundRect(
       paddle.x,
@@ -300,16 +408,27 @@ button:hover {
       paddle.height,
       8
     );
+
     ctx.fill();
   }
 
+  // 공
   function drawBall() {
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.arc(
+      ball.x,
+      ball.y,
+      ball.radius,
+      0,
+      Math.PI * 2
+    );
+
     ctx.fillStyle = "#fff0c5";
     ctx.shadowColor = "#e7c477";
     ctx.shadowBlur = 12;
+
     ctx.fill();
+
     ctx.shadowBlur = 0;
   }
 
@@ -320,6 +439,7 @@ button:hover {
     drawBall();
   }
 
+  // 패들 이동
   function movePaddle() {
     if (pointerX !== null) {
       paddle.x = pointerX - paddle.width / 2;
@@ -331,6 +451,7 @@ button:hover {
     );
   }
 
+  // 벽돌 충돌
   function checkBrickCollision() {
     for (const brick of bricks) {
       if (!brick.alive) continue;
@@ -343,104 +464,155 @@ button:hover {
       ) {
         brick.alive = false;
         ball.dy *= -1;
+
         score += 10;
         updateScore();
+
         break;
       }
     }
   }
 
+  // 스테이지 클리어 확인
   function checkWin() {
     if (bricks.every((brick) => !brick.alive)) {
-      running = false;
-      message.textContent = "축하합니다! 모든 벽돌을 제거했습니다!";
-      startButton.textContent = "다음 도전";
+
+      // 다음 스테이지로 이동
+      stage++;
+
+      createBricks();
+
+      // 공의 현재 속도는 유지
+      // 위치와 방향만 새롭게 설정
+      resetBall();
+
+      updateScore();
+
+      message.textContent =
+        `STAGE ${stage}! 새로운 벽돌이 등장했습니다!`;
+
       return true;
     }
 
     return false;
   }
 
+  // 라이프 1개이므로 공을 놓치면 게임 종료
   function loseLife() {
-    lives--;
+    lives = 0;
+    running = false;
+
     updateScore();
 
-    if (lives <= 0) {
-      running = false;
-      message.textContent = "게임 종료! 다시 도전해 보세요.";
-      startButton.textContent = "다시 도전";
-      return;
-    }
+    message.textContent =
+      "GAME OVER! 공을 놓쳤습니다. 다시 도전해 보세요.";
 
-    resetBall();
-    running = false;
-    message.textContent = "공을 놓쳤어요! 시작 버튼을 눌러 계속하세요.";
-    startButton.textContent = "계속하기";
+    startButton.textContent = "다시 도전";
   }
 
+  // 게임 진행
   function update() {
     if (!running) return;
 
+    animationId = null;
+
     movePaddle();
+
+    // 시간이 지날수록 공 가속
+    applyBallSpeed();
 
     ball.x += ball.dx;
     ball.y += ball.dy;
 
-    if (
-      ball.x + ball.radius > W ||
-      ball.x - ball.radius < 0
-    ) {
-      ball.dx *= -1;
+    // 좌우 벽 충돌
+    if (ball.x + ball.radius >= W) {
+      ball.x = W - ball.radius;
+      ball.dx = -Math.abs(ball.dx);
     }
 
-    if (ball.y - ball.radius < 0) {
-      ball.dy *= -1;
+    if (ball.x - ball.radius <= 0) {
+      ball.x = ball.radius;
+      ball.dx = Math.abs(ball.dx);
     }
 
+    // 위쪽 벽 충돌
+    if (ball.y - ball.radius <= 0) {
+      ball.y = ball.radius;
+      ball.dy = Math.abs(ball.dy);
+    }
+
+    // 패들과 공 충돌
     if (
       ball.dy > 0 &&
       ball.y + ball.radius >= paddle.y &&
-      ball.x >= paddle.x &&
-      ball.x <= paddle.x + paddle.width
+      ball.y - ball.radius <= paddle.y + paddle.height &&
+      ball.x + ball.radius >= paddle.x &&
+      ball.x - ball.radius <= paddle.x + paddle.width
     ) {
       const hitPosition =
         (ball.x - (paddle.x + paddle.width / 2)) /
         (paddle.width / 2);
 
-      ball.dx = hitPosition * 5;
-      ball.dy = -Math.abs(ball.dy);
+      const angle =
+        Math.max(-1, Math.min(1, hitPosition)) *
+        (Math.PI / 3);
+
+      const speed = getBallSpeed();
+
+      ball.dx = speed * Math.sin(angle);
+      ball.dy = -speed * Math.cos(angle);
+
+      // 패들 안쪽으로 다시 들어가는 현상 방지
+      ball.y = paddle.y - ball.radius;
     }
 
+    // 공이 바닥으로 떨어짐
     if (ball.y - ball.radius > H) {
       loseLife();
       draw();
       return;
     }
 
+    // 벽돌 충돌 검사
     checkBrickCollision();
 
+    // 모든 벽돌을 깨면 다음 스테이지
     if (checkWin()) {
       draw();
+      animationId = requestAnimationFrame(update);
       return;
     }
 
     draw();
+
     animationId = requestAnimationFrame(update);
   }
 
+  // 게임 시작
   function startGame() {
     if (running) return;
 
-    if (lives <= 0 || bricks.every((brick) => !brick.alive)) {
+    // 게임 오버 후 다시 도전하면 초기화
+    if (lives <= 0) {
       resetGame();
     }
 
+    // 최초 시작 시 시간 기록
+    if (gameStartedAt === null) {
+      gameStartedAt = performance.now();
+    }
+
     running = true;
-    message.textContent = "벽돌을 모두 깨 보세요!";
+
+    message.textContent =
+      `STAGE ${stage} 진행 중! 벽돌을 모두 깨 보세요!`;
+
     startButton.textContent = "게임 진행 중";
+
     update();
   }
 
+  // 게임 초기화
   function resetGame() {
     running = false;
 
@@ -450,32 +622,46 @@ button:hover {
     }
 
     score = 0;
-    lives = 3;
+    lives = 1;
+    stage = 1;
+
+    gameStartedAt = null;
+    pointerX = null;
+
     paddle.x = W / 2 - paddle.width / 2;
 
     createBricks();
     resetBall();
     updateScore();
 
-    message.textContent = "시작 버튼을 눌러 도전하세요!";
+    message.textContent =
+      "시작 버튼을 눌러 도전하세요!";
+
     startButton.textContent = "게임 시작";
 
     draw();
   }
 
+  // 마우스와 터치 위치 계산
   function setPointerPosition(event) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = W / rect.width;
 
-    pointerX = (event.clientX - rect.left) * scaleX;
+    pointerX =
+      (event.clientX - rect.left) * scaleX;
   }
 
   canvas.addEventListener("pointerdown", (event) => {
+    canvas.setPointerCapture(event.pointerId);
     setPointerPosition(event);
   });
 
   canvas.addEventListener("pointermove", (event) => {
-    if (event.pointerType === "mouse" || event.buttons > 0) {
+    if (
+      event.pointerType === "mouse" ||
+      event.buttons > 0 ||
+      event.pressure > 0
+    ) {
       setPointerPosition(event);
     }
   });
@@ -488,12 +674,15 @@ button:hover {
     pointerX = null;
   });
 
+  // 키보드 조작
   document.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
+      event.preventDefault();
       paddle.x -= paddle.speed;
     }
 
     if (event.key === "ArrowRight") {
+      event.preventDefault();
       paddle.x += paddle.speed;
     }
   });
@@ -501,10 +690,12 @@ button:hover {
   startButton.addEventListener("click", startGame);
   resetButton.addEventListener("click", resetGame);
 
+  // 최초 실행
   createBricks();
   resetBall();
   updateScore();
   draw();
+
 })();
 </script>
 </body>
