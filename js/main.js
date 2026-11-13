@@ -21,7 +21,7 @@
     "games/brick-breaker.html",
     "games/reaction.html",
     "games/omok.html",
-    "games/Snake.html",
+    "games/snake.html",
     "games/neon-shooter.html",
     "games/chess.html",
     "games/tetris.html"
