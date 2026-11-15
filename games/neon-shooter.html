@@ -13,7 +13,7 @@ body{margin:0;min-height:100vh;padding:18px 12px;background:radial-gradient(elli
 .eyebrow{color:#69eaff;font-size:12px;font-weight:bold;letter-spacing:4px}
 h1{margin:12px 0 5px;font-size:34px;color:white;text-shadow:0 0 15px #398cff}
 .description{color:#a8b5d5;font-size:14px}
-.hud{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:20px 0 12px}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 12px}
 .hud-box{padding:10px 4px;border:1px solid #354879;border-radius:10px;background:#111a35}
 .hud-box small{display:block;color:#8fa6d3;font-size:11px;margin-bottom:5px}
 .hud-box strong{color:#65eaff;font-size:19px}
@@ -61,6 +61,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
   <div class="hud">
     <div class="hud-box"><small>SCORE</small><strong id="score">0</strong></div>
+    <div class="hud-box"><small>LIVES</small><strong id="lives">3</strong></div>
     <div class="hud-box"><small>SHIELD</small><strong id="shield">0</strong></div>
   </div>
 
@@ -120,7 +121,7 @@ const ctx=canvas.getContext("2d");
 const $=id=>document.getElementById(id);
 const W=canvas.width,H=canvas.height;
 
-const scoreText=$("score"),shieldText=$("shield");
+const scoreText=$("score"),livesText=$("lives"),shieldText=$("shield");
 const message=$("message");
 const startOverlay=$("startOverlay");
 const upgradeOverlay=$("upgradeOverlay");
@@ -210,7 +211,7 @@ function resetGame(){
 
   upgrades={spread:1,damage:1,pet:0,shield:0,rapid:0,laser:0,pierce:0,side:0,move:0,petPower:0};
 
-  player={x:W/2,y:H-85,radius:13,shield:0};
+  player={x:W/2,y:H-85,radius:13,shield:0,lives:3,invulnerableUntil:0};
 
 
   pointerX=player.x;pointerY=player.y;
@@ -320,6 +321,7 @@ function gameOver(){
 // HUD
 function updateHUD(){
   scoreText.textContent=score.toLocaleString();
+  livesText.textContent=player?player.lives:3;
   shieldText.textContent=player?player.shield:0;
 }
 
@@ -614,7 +616,12 @@ function updateEnemyBullets(dt){
 
 // 충돌 및 피해
 function damagePlayer(){
-  if(state!=="playing")return;
+  if(state!=="playing"||!player)return;
+
+  const now=performance.now();
+  // 연속 충돌로 목숨이 한꺼번에 줄어들지 않도록 짧은 무적 시간을 적용
+  if(now<player.invulnerableUntil)return;
+  player.invulnerableUntil=now+850;
 
   if(player.shield>0){
     player.shield--;
@@ -623,7 +630,16 @@ function damagePlayer(){
     message.textContent="보호막이 공격을 막았습니다!";
     return;
   }
-  gameOver();
+
+  player.lives--;
+  updateHUD();
+  createExplosion(player.x,player.y,"#ff668c",20);
+
+  if(player.lives<=0){
+    gameOver();
+  }else{
+    message.textContent=`피격! 남은 목숨 ${player.lives}개`;
+  }
 }
 
 function updateCollisions(){
