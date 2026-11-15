@@ -1,262 +1,352 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1220">
-  <title>반응속도 테스트 | 카지노</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0b1220;
-      color: #f5f0df;
-      font-family: Arial, sans-serif;
-    }
-
-    .game {
-      width: 100%;
-      max-width: 520px;
-      text-align: center;
-    }
-
-    h1 {
-      color: #e9c76b;
-      font-size: 30px;
-      margin-bottom: 10px;
-    }
-
-    .description {
-      color: #b8c0ce;
-      margin-bottom: 25px;
-      line-height: 1.6;
-    }
-
-    .screen {
-      min-height: 280px;
-      padding: 25px;
-      border: 2px solid #d6ad4c;
-      border-radius: 18px;
-      background: #17243a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
-      transition: background 0.15s;
-    }
-
-    .screen.waiting {
-      background: #a33b42;
-    }
-
-    .screen.ready {
-      background: #16834e;
-    }
-
-    .screen.result {
-      background: #253650;
-    }
-
-    .message {
-      font-size: 25px;
-      font-weight: bold;
-      line-height: 1.4;
-    }
-
-    .sub-message {
-      color: #e0e5ed;
-      font-size: 15px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 15px 25px;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .start-button {
-      width: 100%;
-      margin-top: 20px;
-      color: #172033;
-      background: #e9c76b;
-    }
-
-    .start-button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .stats {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .stat {
-      flex: 1;
-      padding: 15px 8px;
-      border: 1px solid #536078;
-      border-radius: 12px;
-      background: #142036;
-    }
-
-    .stat small {
-      display: block;
-      color: #aeb8c9;
-      margin-bottom: 8px;
-    }
-
-    .stat strong {
-      color: #e9c76b;
-      font-size: 21px;
-    }
-
-    .back {
-      display: inline-block;
-      margin-top: 25px;
-      color: #e9c76b;
-      text-decoration: none;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b18">
+<title>REACTION TEST | 카지노</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:18px 12px;background:radial-gradient(ellipse at top,#20234c,#080b18 70%);color:#eaf5ff;font-family:Arial,"Noto Sans KR",sans-serif;text-align:center}
+.container{width:100%;max-width:680px;margin:auto;padding:22px;border:1px solid #394a80;border-radius:22px;background:rgba(8,13,32,.94);box-shadow:0 0 35px rgba(57,100,255,.12)}
+.eyebrow{color:#69eaff;font-size:12px;font-weight:bold;letter-spacing:4px}
+h1{margin:12px 0 5px;font-size:34px;color:#fff;text-shadow:0 0 15px #398cff}
+.description{color:#a8b5d5;font-size:14px;line-height:1.6}
+.mode-area{margin:20px 0 14px}
+.section-label{display:block;margin-bottom:9px;color:#9db2dc;font-size:12px;font-weight:bold;letter-spacing:1px}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mode-btn{margin:0;padding:12px 5px;border:1px solid #405a91;border-radius:11px;background:#111a35;color:#dce8ff;font-size:15px}
+.mode-btn.selected{border:2px solid #65eaff;background:#19345d;color:#fff;box-shadow:0 0 14px #40dfff35}
+.mode-btn small{display:block;margin-top:4px;color:#91a8d1;font-size:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 12px}
+.stat{padding:11px 5px;border:1px solid #354879;border-radius:10px;background:#111a35}
+.stat small{display:block;margin-bottom:5px;color:#8fa6d3;font-size:11px}
+.stat strong{color:#65eaff;font-size:19px}
+.play-area{position:relative;display:flex;min-height:260px;align-items:center;justify-content:center;overflow:hidden;border:1px solid #405a9c;border-radius:15px;background:#a9273d;transition:background .15s;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer}
+.play-area.waiting{background:linear-gradient(145deg,#a92842,#64172e)}
+.play-area.ready{background:linear-gradient(145deg,#12a96b,#08744d)}
+.play-area.result{background:linear-gradient(145deg,#173765,#101d3e)}
+.play-area.false{background:linear-gradient(145deg,#8c263b,#401326)}
+.play-content{padding:22px}
+.play-title{display:block;margin-bottom:10px;color:#fff;font-size:clamp(25px,6vw,36px);font-weight:900;text-shadow:0 2px 12px #0005}
+.play-sub{color:#fff;font-size:14px;line-height:1.6}
+.progress{height:7px;margin:14px 0 0;overflow:hidden;border-radius:20px;background:#263653}
+.progress-fill{width:0;height:100%;background:linear-gradient(90deg,#55eaff,#ffe17a);transition:width .2s}
+.actions{margin:15px 0}
+button{cursor:pointer;font-family:inherit}
+.main-btn{margin:5px;padding:12px 24px;border:1px solid #57dfff;border-radius:30px;background:#142448;color:white;font-size:15px;font-weight:bold}
+.main-btn:hover{background:#24528b}
+.result-panel{display:none;margin-top:14px;padding:15px;border:1px solid #354879;border-radius:13px;background:#101a34}
+.result-panel.show{display:block}
+.result-panel h2{margin:0 0 8px;color:#75eaff;font-size:20px}
+.result-big{margin:8px 0;color:#ffe18b;font-size:32px;font-weight:bold}
+.result-detail{color:#b8c8e8;font-size:13px;line-height:1.7}
+.name-row{display:flex;gap:7px;margin-top:12px}
+.name-input{min-width:0;flex:1;padding:11px;border:1px solid #4d6a9f;border-radius:9px;background:#080f25;color:white;font-size:15px;text-align:center}
+.save-btn{margin:0;padding:11px 15px;border:1px solid #57dfff;border-radius:9px;background:#142448;color:#fff;font-weight:bold}
+.rankings{margin-top:22px;padding:15px;border:1px solid #354879;border-radius:14px;background:#101a34;text-align:left}
+.rankings h2{margin:0 0 12px;color:#75eaff;text-align:center;font-size:18px}
+.rank-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.rank-tab{margin:0;padding:9px 3px;border:1px solid #354879;border-radius:9px;background:#0c1630;color:#b9c9e8;font-size:12px}
+.rank-tab.selected{border-color:#65eaff;background:#19345d;color:white}
+.rank-row{display:grid;grid-template-columns:42px 1fr auto;gap:8px;padding:9px 5px;border-bottom:1px solid rgba(130,160,220,.15);color:#dce8ff;font-size:14px}
+.rank-row:last-child{border-bottom:0}
+.rank-number{color:#ffd875;font-weight:bold}
+.rank-score{color:#69eaff;font-weight:bold}
+.empty{padding:15px 5px;color:#9aabc9;text-align:center;font-size:13px}
+.back{display:inline-block;margin-top:18px;color:#9eaccb;text-decoration:none;font-size:14px}
+@media(max-width:390px){.container{padding:15px 10px}h1{font-size:29px}.play-area{min-height:230px}.stat strong{font-size:17px}.mode-btn{font-size:13px}.rank-tab{font-size:11px}}
+</style>
 </head>
-
 <body>
-  <main class="game">
-    <h1>반응속도 테스트</h1>
-    <p class="description">
-      화면이 초록색으로 바뀌는 순간 화면을 눌러 보세요!<br>
-      얼마나 빠르게 반응할 수 있을까요?
-    </p>
+<div class="container">
+  <div class="eyebrow">CASINO MINI GAME 03</div>
+  <h1>REACTION TEST</h1>
+  <p class="description">초록색 화면이 나타나면 최대한 빠르게 눌러보세요!<br>여러 번 측정한 평균 반응속도로 기록을 경쟁합니다.</p>
 
-    <section class="screen" id="screen">
-      <div class="message" id="message">준비되셨나요?</div>
-      <div class="sub-message" id="subMessage">
-        시작 버튼을 눌러 도전하세요.
-      </div>
-    </section>
-
-    <button class="start-button" id="startButton">
-      게임 시작
-    </button>
-
-    <div class="stats">
-      <div class="stat">
-        <small>이번 기록</small>
-        <strong id="currentScore">-</strong>
-      </div>
-      <div class="stat">
-        <small>최고 기록</small>
-        <strong id="bestScore">-</strong>
-      </div>
+  <div class="mode-area">
+    <span class="section-label">측정 횟수 선택</span>
+    <div class="modes" id="modeButtons">
+      <button class="mode-btn selected" data-count="1">1회<small>단일 측정</small></button>
+      <button class="mode-btn" data-count="3">3회<small>평균 측정</small></button>
+      <button class="mode-btn" data-count="5">5회<small>평균 측정</small></button>
+      <button class="mode-btn" data-count="10">10회<small>평균 측정</small></button>
     </div>
+  </div>
 
-    <a class="back" href="../index.html">← 카지노 메인으로</a>
-  </main>
+  <div class="stats">
+    <div class="stat"><small>진행 횟수</small><strong id="progressText">0 / 1</strong></div>
+    <div class="stat"><small>최근 반응속도</small><strong id="currentText">---</strong></div>
+    <div class="stat"><small>현재 평균</small><strong id="averageText">---</strong></div>
+  </div>
 
-  <script>
-    const screen = document.getElementById("screen");
-    const message = document.getElementById("message");
-    const subMessage = document.getElementById("subMessage");
-    const startButton = document.getElementById("startButton");
-    const currentScore = document.getElementById("currentScore");
-    const bestScore = document.getElementById("bestScore");
+  <div class="play-area waiting" id="playArea">
+    <div class="play-content">
+      <span class="play-title" id="playTitle">준비되셨나요?</span>
+      <span class="play-sub" id="playSub">시작 버튼을 누르고 초록색 화면을 기다리세요.</span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
 
-    let state = "idle";
-    let readyTime = 0;
-    let timeoutId = null;
-    let best = null;
+  <div class="actions">
+    <button class="main-btn" id="startButton">측정 시작</button>
+    <button class="main-btn" id="resetButton" style="display:none">다시 측정</button>
+  </div>
 
-    try {
-      best = Number(localStorage.getItem("reactionBest")) || null;
-    } catch (error) {
-      best = null;
-    }
+  <div class="result-panel" id="resultPanel">
+    <h2 id="resultHeading">측정 완료!</h2>
+    <div class="result-big" id="resultAverage">---</div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="name-row">
+      <input class="name-input" id="playerName" maxlength="10" placeholder="이름 입력">
+      <button class="save-btn" id="saveButton">기록 저장</button>
+    </div>
+  </div>
 
-    function updateBest() {
-      bestScore.textContent = best === null ? "-" : best + " ms";
-    }
+  <div class="rankings">
+    <h2>🏆 TOP 5 RANKING</h2>
+    <div class="rank-tabs" id="rankTabs">
+      <button class="rank-tab selected" data-count="1">1회 랭킹</button>
+      <button class="rank-tab" data-count="3">3회 랭킹</button>
+      <button class="rank-tab" data-count="5">5회 랭킹</button>
+      <button class="rank-tab" data-count="10">10회 랭킹</button>
+    </div>
+    <div id="rankingList"></div>
+  </div>
 
-    function startGame() {
-      clearTimeout(timeoutId);
+  <a class="back" href="../index.html">← 카지노 메인으로 돌아가기</a>
+</div>
 
-      state = "waiting";
-      screen.className = "screen waiting";
-      message.textContent = "기다리세요!";
-      subMessage.textContent = "초록색으로 바뀌기 전에는 누르지 마세요.";
-      currentScore.textContent = "-";
-      startButton.disabled = true;
-      startButton.textContent = "진행 중...";
+<script>
+(() => {
+"use strict";
 
-      const delay = 1500 + Math.random() * 2500;
+const $ = id => document.getElementById(id);
+const playArea = $("playArea");
+const playTitle = $("playTitle");
+const playSub = $("playSub");
 
-      timeoutId = setTimeout(() => {
-        state = "ready";
-        readyTime = performance.now();
+const STORAGE_KEY = "casinoReactionRankingsV2";
+const VALID_COUNTS = [1,3,5,10];
 
-        screen.className = "screen ready";
-        message.textContent = "지금 누르세요!";
-        subMessage.textContent = "화면을 최대한 빠르게 터치하세요!";
-      }, delay);
-    }
+let selectedCount = 1;
+let rankingCount = 1;
+let state = "idle";
+let round = 0;
+let results = [];
+let readyAt = 0;
+let waitTimer = null;
+let saved = false;
 
-    function react() {
-      if (state === "waiting") {
-        clearTimeout(timeoutId);
+function getRankings(){
+  try{
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    return data && typeof data === "object" ? data : {};
+  }catch{
+    return {};
+  }
+}
 
-        state = "idle";
-        screen.className = "screen result";
-        message.textContent = "너무 빨랐어요!";
-        subMessage.textContent = "초록색으로 바뀐 뒤에 눌러야 합니다.";
-        startButton.disabled = false;
-        startButton.textContent = "다시 도전";
-        return;
-      }
+function setScreen(type,title,sub){
+  playArea.className = "play-area " + type;
+  playTitle.textContent = title;
+  playSub.textContent = sub;
+}
 
-      if (state === "ready") {
-        const reaction = Math.round(performance.now() - readyTime);
+function updateStats(){
+  $("progressText").textContent = `${round} / ${selectedCount}`;
+  $("currentText").textContent = results.length ? `${results[results.length-1]} ms` : "---";
+  const avg = results.length ? results.reduce((a,b)=>a+b,0)/results.length : 0;
+  $("averageText").textContent = results.length ? `${avg.toFixed(1)} ms` : "---";
+  $("progressFill").style.width = `${round/selectedCount*100}%`;
+}
 
-        state = "idle";
-        screen.className = "screen result";
-        message.textContent = reaction + " ms";
-        subMessage.textContent = "반응속도 측정 완료!";
+function chooseMode(count){
+  if(state === "waiting" || state === "ready") cancelSession();
+  selectedCount = count;
+  document.querySelectorAll(".mode-btn").forEach(btn=>{
+    btn.classList.toggle("selected",Number(btn.dataset.count)===count);
+  });
+  $("resultPanel").classList.remove("show");
+  $("startButton").style.display = "inline-block";
+  $("resetButton").style.display = "none";
+  round = 0;
+  results = [];
+  saved = false;
+  updateStats();
+  setScreen("waiting","준비되셨나요?",`${count}회 측정을 시작할 준비가 되었습니다.`);
+  $("startButton").textContent = "측정 시작";
+}
 
-        currentScore.textContent = reaction + " ms";
+function cancelSession(){
+  clearTimeout(waitTimer);
+  waitTimer = null;
+  state = "idle";
+}
 
-        if (best === null || reaction < best) {
-          best = reaction;
+function beginSession(){
+  clearTimeout(waitTimer);
+  round = 0;
+  results = [];
+  saved = false;
+  $("resultPanel").classList.remove("show");
+  $("startButton").style.display = "none";
+  $("resetButton").style.display = "inline-block";
+  nextRound();
+}
 
-          try {
-            localStorage.setItem("reactionBest", String(best));
-          } catch (error) {
-            // 저장이 제한된 환경에서는 현재 기록만 표시합니다.
-          }
+function nextRound(){
+  state = "waiting";
+  round++;
+  updateStats();
+  setScreen("waiting","기다리세요...","화면이 초록색으로 바뀌기 전에는 누르지 마세요!");
 
-          subMessage.textContent = "새로운 최고 기록입니다!";
-        }
+  const delay = 1500 + Math.random()*3000;
+  waitTimer = setTimeout(()=>{
+    if(state !== "waiting") return;
+    state = "ready";
+    readyAt = performance.now();
+    setScreen("ready","지금 클릭!","화면을 최대한 빠르게 누르세요!");
+  },delay);
+}
 
-        updateBest();
-        startButton.disabled = false;
-        startButton.textContent = "다시 도전";
-      }
-    }
+function handlePlay(){
+  if(state === "waiting"){
+    clearTimeout(waitTimer);
+    state = "false";
+    setScreen("false","너무 빨랐어요!","초록색으로 바뀌기 전에 눌렀습니다. 다시 측정하세요.");
+    $("startButton").style.display = "inline-block";
+    $("startButton").textContent = "다시 시작";
+    $("resetButton").style.display = "none";
+    $("progressFill").style.width = "0%";
+    round = 0;
+    results = [];
+    updateStats();
+    return;
+  }
 
-    startButton.addEventListener("click", startGame);
-    screen.addEventListener("pointerdown", react);
+  if(state !== "ready") return;
 
-    updateBest();
-  </script>
+  const reaction = Math.round(performance.now()-readyAt);
+  results.push(reaction);
+  state = "result";
+  updateStats();
+
+  if(results.length >= selectedCount){
+    finishSession();
+  }else{
+    const remaining = selectedCount-results.length;
+    setScreen("result",`${reaction} ms`,`좋아요! ${remaining}회 더 측정합니다. 잠시 후 다음 측정이 시작됩니다.`);
+    waitTimer = setTimeout(()=>{
+      if(state === "result") nextRound();
+    },900);
+  }
+}
+
+function finishSession(){
+  state = "finished";
+  const average = results.reduce((a,b)=>a+b,0)/results.length;
+  const formatted = average.toFixed(1);
+
+  setScreen("result",`${formatted} ms`,"평균 반응속도 측정 완료!");
+  $("resultHeading").textContent = `${selectedCount}회 측정 완료!`;
+  $("resultAverage").textContent = `${formatted} ms`;
+  $("resultDetail").textContent =
+    `측정 결과: ${results.join(" ms · ")} ms | 총 ${selectedCount}회 평균`;
+  $("resultPanel").classList.add("show");
+  $("startButton").style.display = "none";
+  $("resetButton").style.display = "inline-block";
+  $("saveButton").disabled = false;
+  $("saveButton").textContent = "기록 저장";
+}
+
+function saveResult(){
+  if(state !== "finished" || saved) return;
+
+  const name = $("playerName").value.trim().slice(0,10) || "PLAYER";
+  const average = results.reduce((a,b)=>a+b,0)/results.length;
+  const data = getRankings();
+  const key = String(selectedCount);
+
+  if(!Array.isArray(data[key])) data[key] = [];
+  data[key].push({
+    name,
+    average: Number(average.toFixed(1)),
+    attempts: [...results],
+    date: Date.now()
+  });
+
+  data[key].sort((a,b)=>a.average-b.average);
+  data[key] = data[key].slice(0,5);
+
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+    saved = true;
+    $("saveButton").disabled = true;
+    $("saveButton").textContent = "저장 완료";
+    rankingCount = selectedCount;
+    renderRanking();
+  }catch{
+    $("resultDetail").textContent = "기록 저장에 실패했습니다. 브라우저 저장 공간을 확인하세요.";
+  }
+}
+
+function renderRanking(){
+  const data = getRankings();
+  const records = Array.isArray(data[String(rankingCount)]) ? data[String(rankingCount)] : [];
+  const list = $("rankingList");
+  list.innerHTML = "";
+
+  if(!records.length){
+    list.innerHTML = '<div class="empty">아직 등록된 기록이 없습니다.</div>';
+  }else{
+    records.slice(0,5).forEach((record,index)=>{
+      const row = document.createElement("div");
+      row.className = "rank-row";
+
+      const rank = document.createElement("span");
+      rank.className = "rank-number";
+      rank.textContent = `${index+1}위`;
+
+      const name = document.createElement("span");
+      name.textContent = record.name;
+
+      const score = document.createElement("span");
+      score.className = "rank-score";
+      score.textContent = `${Number(record.average).toFixed(1)} ms`;
+
+      row.append(rank,name,score);
+      list.appendChild(row);
+    });
+  }
+
+  document.querySelectorAll(".rank-tab").forEach(btn=>{
+    btn.classList.toggle("selected",Number(btn.dataset.count)===rankingCount);
+  });
+}
+
+document.querySelectorAll(".mode-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>chooseMode(Number(btn.dataset.count)));
+});
+
+document.querySelectorAll(".rank-tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    rankingCount = Number(btn.dataset.count);
+    renderRanking();
+  });
+});
+
+$("startButton").addEventListener("click",beginSession);
+$("resetButton").addEventListener("click",()=>{
+  cancelSession();
+  beginSession();
+});
+$("saveButton").addEventListener("click",saveResult);
+playArea.addEventListener("pointerdown",handlePlay);
+
+chooseMode(1);
+renderRanking();
+})();
+</script>
 </body>
 </html>
