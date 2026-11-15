@@ -13,7 +13,7 @@ body{margin:0;min-height:100vh;padding:18px 12px;background:radial-gradient(elli
 .eyebrow{color:#69eaff;font-size:12px;font-weight:bold;letter-spacing:4px}
 h1{margin:12px 0 5px;font-size:34px;color:white;text-shadow:0 0 15px #398cff}
 .description{color:#a8b5d5;font-size:14px}
-.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0 12px}
+.hud{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:20px 0 12px}
 .hud-box{padding:10px 4px;border:1px solid #354879;border-radius:10px;background:#111a35}
 .hud-box small{display:block;color:#8fa6d3;font-size:11px;margin-bottom:5px}
 .hud-box strong{color:#65eaff;font-size:19px}
@@ -61,7 +61,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
   <div class="hud">
     <div class="hud-box"><small>SCORE</small><strong id="score">0</strong></div>
-    <div class="hud-box"><small>TIME</small><strong id="time">0</strong></div>
     <div class="hud-box"><small>SHIELD</small><strong id="shield">0</strong></div>
   </div>
 
@@ -75,26 +74,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
     <div class="overlay show" id="startOverlay">
       <div class="panel">
-        <h2>우주선 선택</h2>
-        <p>원하는 우주선을 선택하고 전투를 시작하세요.</p>
-        <div class="ship-list">
-          <button class="ship-card selected" data-ship="attack">
-            <strong>⚔️ 공격형</strong>
-            <span class="ship-icon">🚀</span>
-            공격력 +1
-          </button>
-          <button class="ship-card" data-ship="defense">
-            <strong>🛡️ 방어형</strong>
-            <span class="ship-icon">🛸</span>
-            보호막 +1
-          </button>
-          <button class="ship-card" data-ship="speed">
-            <strong>⚡ 속도형</strong>
-            <span class="ship-icon">✈️</span>
-            이동 속도 증가
-          </button>
-        </div>
-        <p id="shipDescription">공격력이 강한 우주선입니다.</p>
+        <h2>NEON SHOOTER</h2>
+        <p>적의 공격을 피하고 강화 아이템을 선택해 보스를 격파하세요.</p>
+        <p>화면을 드래그하면 우주선이 이동하며 자동으로 공격합니다.</p>
         <button id="playButton">게임 시작</button>
       </div>
     </div>
@@ -119,7 +101,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
   </div>
 
-  <div class="message" id="message">우주선을 선택하고 게임을 시작하세요!</div>
+  <div class="message" id="message">게임을 시작하고 적을 격파하세요!</div>
   <button id="mainButton">게임 시작</button>
 
   <div class="leaderboard">
@@ -138,7 +120,7 @@ const ctx=canvas.getContext("2d");
 const $=id=>document.getElementById(id);
 const W=canvas.width,H=canvas.height;
 
-const scoreText=$("score"),timeText=$("time"),shieldText=$("shield");
+const scoreText=$("score"),shieldText=$("shield");
 const message=$("message");
 const startOverlay=$("startOverlay");
 const upgradeOverlay=$("upgradeOverlay");
@@ -149,75 +131,87 @@ const mainButton=$("mainButton");
 
 let state="menu",animationId=null,lastTime=0;
 let score=0,elapsed=0,nextUpgrade=25,nextBoss=60;
-let player=null,bullets=[],enemies=[],particles=[],enemyBullets=[],missiles=[],pets=[],boss=null,stars=[];
+let player=null,bullets=[],enemies=[],particles=[],enemyBullets=[],bossBullets=[],missiles=[],pets=[],boss=null,stars=[];
 let pointerDown=false,pointerX=W/2,pointerY=H-90,firing=false,fireCooldown=0;
-let enemySpawnTimer=0,petTimer=0;
-let selectedShip="attack";
+let enemySpawnTimer=0,petTimer=0,laserTimer=0;
 
-let upgrades={triple:false,damage:1,pet:0,shield:0,rapid:0,laser:false};
+let upgrades={spread:1,damage:1,pet:0,shield:0,rapid:0,laser:0,pierce:0,side:0,move:0,petPower:0};
 
 const RANKING_KEY="neonShooterTop5";
 
-const shipDescriptions={
-  attack:"공격력이 강한 우주선입니다. 시작부터 공격력이 1 증가합니다.",
-  defense:"방어력이 높은 우주선입니다. 시작할 때 보호막을 1개 얻습니다.",
-  speed:"기동성이 뛰어난 우주선입니다. 더 빠르게 움직일 수 있습니다."
-};
-
-document.querySelectorAll(".ship-card").forEach(button=>{
-  button.addEventListener("click",()=>{
-    selectedShip=button.dataset.ship;
-    document.querySelectorAll(".ship-card").forEach(b=>b.classList.remove("selected"));
-    button.classList.add("selected");
-    $("shipDescription").textContent=shipDescriptions[selectedShip];
-  });
-});
-
 const upgradeOptions=[
   {
-    id:"triple",name:"🔱 3방향 발사",
-    description:"공격이 세 방향으로 퍼져 나갑니다.",
-    apply(){upgrades.triple=true;}
+    id:"spread",name:"🔱 발사 범위 +1",
+    description:"발사되는 탄환의 방향이 한 갈래 추가됩니다. 중복 강화 가능!",
+    apply(){upgrades.spread++;}
   },
   {
-    id:"laser",name:"🔵 관통 레이저",
-    description:"레이저가 적을 관통하여 여러 적을 공격합니다.",
-    apply(){upgrades.laser=true;}
+    id:"laser",name:"🔵 자동 레이저",
+    description:"일정 시간마다 직선 레이저를 추가 발사합니다. 기본 탄환은 그대로 발사됩니다.",
+    apply(){upgrades.laser++;}
   },
   {
     id:"pet",name:"🤖 공격 펫",
-    description:"우주선 옆에서 일정 시간마다 탄환을 발사합니다.",
+    description:"우주선 옆에서 일정 시간마다 탄환을 발사하는 펫을 얻습니다.",
     apply(){upgrades.pet++;createPets();}
   },
   {
     id:"damage",name:"💥 공격력 강화",
-    description:"모든 공격의 피해량이 1 증가합니다. 중복 강화 가능!",
+    description:"기본 탄환과 펫의 공격력이 1 증가합니다. 중복 강화 가능!",
     apply(){upgrades.damage++;}
   },
   {
     id:"shield",name:"🛡️ 보호막",
-    description:"위험한 공격을 한 번 막아주는 보호막을 얻습니다.",
+    description:"적의 공격을 한 번 막아주는 보호막을 얻습니다.",
     apply(){upgrades.shield++;player.shield++;}
   },
   {
     id:"rapid",name:"⚡ 연사 강화",
-    description:"공격 간격이 짧아져 더 빠르게 발사합니다.",
+    description:"기본 탄환의 발사 간격이 짧아집니다.",
     apply(){upgrades.rapid++;}
+  },
+  {
+    id:"pierce",name:"✨ 관통 탄환",
+    description:"기본 탄환이 적을 관통해 추가로 공격합니다.",
+    apply(){upgrades.pierce++;}
+  },
+  {
+    id:"side",name:"🪽 양쪽 보조포",
+    description:"우주선 양옆에서 추가 탄환을 발사합니다. 중복 강화 가능!",
+    apply(){upgrades.side++;}
+  },
+  {
+    id:"move",name:"💨 기동력 강화",
+    description:"드래그 이동 속도가 증가합니다.",
+    apply(){upgrades.move++;}
+  },
+  {
+    id:"petPower",name:"🤖 펫 화력 강화",
+    description:"공격 펫의 탄환 피해량이 증가합니다.",
+    apply(){upgrades.petPower++;}
+  },
+  {
+    id:"laserPower",name:"⚡ 레이저 강화",
+    description:"자동 레이저의 피해량과 관통 횟수가 증가합니다.",
+    apply(){upgrades.laser++; }
+  },
+  {
+    id:"repair",name:"💠 보호막 충전",
+    description:"보호막을 한 개 추가로 얻습니다.",
+    apply(){player.shield++;upgrades.shield++;}
   }
 ];
 
 // 초기화
 function resetGame(){
   score=0;elapsed=0;nextUpgrade=25;nextBoss=60;
-  bullets=[];enemies=[];particles=[];enemyBullets=[];missiles=[];pets=[];
-  boss=null;enemySpawnTimer=0;petTimer=0;fireCooldown=0;
+  bullets=[];enemies=[];particles=[];enemyBullets=[];bossBullets=[];missiles=[];pets=[];
+  boss=null;enemySpawnTimer=0;petTimer=0;laserTimer=0;fireCooldown=0;
 
-  upgrades={triple:false,damage:1,pet:0,shield:0,rapid:0,laser:false};
+  upgrades={spread:1,damage:1,pet:0,shield:0,rapid:0,laser:0,pierce:0,side:0,move:0,petPower:0};
 
   player={x:W/2,y:H-85,radius:13,shield:0};
 
-  if(selectedShip==="attack") upgrades.damage=2;
-  if(selectedShip==="defense") player.shield=1;
 
   pointerX=player.x;pointerY=player.y;
 
@@ -326,43 +320,47 @@ function gameOver(){
 // HUD
 function updateHUD(){
   scoreText.textContent=score.toLocaleString();
-  timeText.textContent=Math.floor(elapsed);
   shieldText.textContent=player?player.shield:0;
 }
 
-// 플레이어 공격
+// 플레이어 기본 공격
 function shootPlayer(){
-  const damage=upgrades.damage;
-
-  if(upgrades.laser){
-    // 관통 레이저 탄환
+  const lanes=Math.max(1,Math.min(11,upgrades.spread));
+  const spreadAngle=Math.min(.62,.13*(lanes-1));
+  for(let i=0;i<lanes;i++){
+    const ratio=lanes===1?0:(i/(lanes-1))*2-1;
+    const angle=ratio*spreadAngle;
     bullets.push({
-      x:player.x,y:player.y-18,vx:0,vy:-560,
-      damage:damage+1,radius:5,type:"laser",
-      pierce:5,hitIds:[]
+      x:player.x,y:player.y-15,
+      vx:Math.sin(angle)*390,vy:-Math.cos(angle)*420,
+      damage:upgrades.damage,radius:4,type:"normal",
+      pierce:upgrades.pierce,hitIds:[]
     });
-    return;
   }
-
-  if(upgrades.triple){
-    [-.25,0,.25].forEach(angle=>{
+  // 보조포는 기본 공격과 함께 발사
+  for(let i=0;i<upgrades.side;i++){
+    const offset=22+i*12;
+    [-1,1].forEach(side=>{
       bullets.push({
-        x:player.x,y:player.y-15,
-        vx:Math.sin(angle)*370,vy:-Math.cos(angle)*370,
-        damage,radius:4,type:"normal"
+        x:player.x+side*offset,y:player.y-5,
+        vx:side*35,vy:-420,damage:upgrades.damage,
+        radius:3,type:"side",pierce:upgrades.pierce,hitIds:[]
       });
     });
-  }else{
-    bullets.push({
-      x:player.x,y:player.y-15,vx:0,vy:-420,
-      damage,radius:4,type:"normal"
-    });
   }
+}
+
+function shootLaser(){
+  bullets.push({
+    x:player.x,y:player.y-18,vx:0,vy:-620,
+    damage:upgrades.damage+upgrades.laser,
+    radius:5,type:"laser",pierce:5+upgrades.laser*2,hitIds:[]
+  });
 }
 
 function updatePlayer(dt){
   if(pointerDown){
-    const moveRate=selectedShip==="speed"?22:14;
+    const moveRate=14+Math.min(10,upgrades.move*1.5);
     player.x+=(pointerX-player.x)*Math.min(1,dt*moveRate);
     player.y+=(pointerY-player.y)*Math.min(1,dt*moveRate);
   }
@@ -370,12 +368,20 @@ function updatePlayer(dt){
   player.x=Math.max(18,Math.min(W-18,player.x));
   player.y=Math.max(H*.42,Math.min(H-35,player.y));
 
-  const interval=Math.max(.10,.28-upgrades.rapid*.045);
+  const interval=Math.max(.09,.28-upgrades.rapid*.035);
   fireCooldown-=dt;
-
   if(firing&&fireCooldown<=0){
     shootPlayer();
     fireCooldown=interval;
+  }
+
+  // 자동 레이저는 기본 탄환을 대체하지 않는 추가 공격
+  if(upgrades.laser>0){
+    laserTimer-=dt;
+    if(laserTimer<=0){
+      shootLaser();
+      laserTimer=Math.max(.35,1.25-upgrades.laser*.08);
+    }
   }
 }
 
@@ -403,7 +409,7 @@ function updatePets(dt){
     pets.forEach(pet=>{
       bullets.push({
         x:pet.x,y:pet.y-10,vx:0,vy:-350,
-        damage:upgrades.damage,radius:3,type:"pet"
+        damage:upgrades.damage+upgrades.petPower,radius:3,type:"pet"
       });
     });
   }
@@ -459,12 +465,41 @@ function spawnBoss(){
     attackTimer:1.5,
     laserX:0,laserWarning:false,laserActive:false,
     laserDuration:0,laserHit:false,
-    missileCooldown:0
+    missileCooldown:1.8,patternIndex:0
   };
 
   enemies=[];
   bossBarWrap.classList.add("show");
   message.textContent="⚠ BOSS 등장! 공격을 피하세요!";
+}
+
+function fireBossPattern(){
+  if(!boss)return;
+  const dx=player.x-boss.x,dy=player.y-boss.y;
+  const baseAngle=Math.atan2(dy,dx);
+  const add=(angle,speed=175,radius=7)=>{
+    bossBullets.push({
+      x:boss.x,y:boss.y+24,
+      vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      radius,damage:1
+    });
+  };
+
+  // 공격 패턴을 순환시켜 다양한 방향으로 탄환 발사
+  const pattern=boss.patternIndex++%4;
+  if(pattern===0){
+    // 넓은 부채꼴
+    for(let i=-3;i<=3;i++)add(Math.PI/2+i*.22,165,7);
+  }else if(pattern===1){
+    // 플레이어 방향을 겨냥한 3연발
+    for(let i=-1;i<=1;i++)add(baseAngle+i*.16,205,7);
+  }else if(pattern===2){
+    // 원형 탄막
+    for(let i=0;i<12;i++)add((Math.PI*2/12)*i,145,6);
+  }else{
+    // 좌우로 퍼지는 빠른 탄막
+    for(let i=-4;i<=4;i++)add(Math.PI/2+i*.13,225,6);
+  }
 }
 
 function updateBoss(dt){
@@ -477,7 +512,7 @@ function updateBoss(dt){
     boss.laserWarning=true;
     boss.laserX=player.x;
     boss.laserDuration=.8;
-    boss.attackTimer=4.5;
+    boss.attackTimer=4.8;
   }
 
   if(boss.laserWarning){
@@ -490,24 +525,31 @@ function updateBoss(dt){
     }
   }
 
-  // 레이저 한 번의 발사에서 피해는 한 번만 적용
   if(boss.laserActive){
     boss.laserDuration-=dt;
-
     if(!boss.laserHit&&Math.abs(player.x-boss.laserX)<24&&player.y<H-20){
       boss.laserHit=true;
       damagePlayer();
     }
-
     if(boss.laserDuration<=0)boss.laserActive=false;
   }
 
+  // 일반 탄막 패턴
+  boss.patternTimer=(boss.patternTimer??1.1)-dt;
+  if(boss.patternTimer<=0){
+    fireBossPattern();
+    boss.patternTimer=1.65;
+  }
+
+  // 유도 미사일 발사
   if(boss.missileCooldown<=0){
+    const launchAngle=Math.atan2(player.y-(boss.y+25),player.x-boss.x);
     missiles.push({
-      x:boss.x,y:boss.y+25,vx:0,vy:120,
-      speed:150+elapsed*.3,radius:8
+      x:boss.x,y:boss.y+25,
+      vx:Math.cos(launchAngle)*85,vy:Math.sin(launchAngle)*85,
+      speed:125+Math.min(25,elapsed*.12),radius:8,life:6
     });
-    boss.missileCooldown=3.2;
+    boss.missileCooldown=3.6;
   }
 
   updateBossBar();
@@ -520,7 +562,6 @@ function updateBossBar(){
 
 function defeatBoss(){
   score+=500;
-
   for(let i=0;i<45;i++){
     createExplosion(
       boss.x+(Math.random()-.5)*100,
@@ -528,29 +569,39 @@ function defeatBoss(){
       "#ff70cb"
     );
   }
-
   boss=null;
+  // 보스가 쓰러지면 보스가 발사한 미사일과 탄막을 즉시 제거
+  missiles=[];
+  bossBullets=[];
+  enemyBullets=[];
   bossBarWrap.classList.remove("show");
   nextBoss=elapsed+60;
   message.textContent="BOSS 격파! 보너스 점수 500점 획득!";
   updateHUD();
 }
 
-// 유도 미사일
+// 유도 미사일: 추적 강도를 낮춰 방향 전환이 늦고 빗나갈 수 있음
 function updateMissiles(dt){
   missiles.forEach(m=>{
     const dx=player.x-m.x,dy=player.y-m.y;
     const length=Math.hypot(dx,dy)||1;
     const targetVX=dx/length*m.speed;
     const targetVY=dy/length*m.speed;
-
-    m.vx+=(targetVX-m.vx)*dt*1.8;
-    m.vy+=(targetVY-m.vy)*dt*1.8;
+    m.vx+=(targetVX-m.vx)*dt*.38;
+    m.vy+=(targetVY-m.vy)*dt*.38;
     m.x+=m.vx*dt;
     m.y+=m.vy*dt;
+    m.life-=dt;
   });
+  missiles=missiles.filter(m=>m.life>0&&m.y<H+35&&m.y>-35&&m.x>-40&&m.x<W+40);
+}
 
-  missiles=missiles.filter(m=>m.y<H+30&&m.x>-30&&m.x<W+30);
+function updateBossBullets(dt){
+  bossBullets.forEach(b=>{
+    b.x+=b.vx*dt;
+    b.y+=b.vy*dt;
+  });
+  bossBullets=bossBullets.filter(b=>b.x>-35&&b.x<W+35&&b.y>-35&&b.y<H+35);
 }
 
 function updateEnemyBullets(dt){
@@ -590,10 +641,10 @@ function updateCollisions(){
 
         createExplosion(bullet.x,bullet.y,bullet.type==="laser"?"#6ffaff":enemy.color,4);
 
-        if(bullet.type==="laser"){
+        if(bullet.type==="laser"||bullet.pierce>0){
           bullet.hitIds.push(enemy.id);
           bullet.pierce--;
-          if(bullet.pierce<=0)removeBullet=true;
+          if(bullet.pierce<0)removeBullet=true;
         }else{
           removeBullet=true;
         }
@@ -604,7 +655,7 @@ function updateCollisions(){
           enemies.splice(j,1);
         }
 
-        if(bullet.type!=="laser")break;
+        if(bullet.type!=="laser"&&!(bullet.pierce>0))break;
       }
     }
 
@@ -616,9 +667,9 @@ function updateCollisions(){
         bullet.y<boss.y+boss.height/2
       ){
         boss.hp-=bullet.damage;
-        if(bullet.type==="laser"){
+        if(bullet.type==="laser"||bullet.pierce>0){
           bullet.pierce--;
-          if(bullet.pierce<=0)removeBullet=true;
+          if(bullet.pierce<0)removeBullet=true;
         }else{
           removeBullet=true;
         }
@@ -648,6 +699,14 @@ function updateCollisions(){
   }
 
   for(const bullet of enemyBullets){
+    if(Math.hypot(player.x-bullet.x,player.y-bullet.y)<player.radius+bullet.radius){
+      bullet.y=H+100;
+      damagePlayer();
+      if(state!=="playing")return;
+    }
+  }
+
+  for(const bullet of bossBullets){
     if(Math.hypot(player.x-bullet.x,player.y-bullet.y)<player.radius+bullet.radius){
       bullet.y=H+100;
       damagePlayer();
@@ -770,7 +829,7 @@ function drawPlayer(){
   ctx.lineTo(player.x+17,player.y+15);
   ctx.closePath();
 
-  const shipColor=selectedShip==="attack"?"#ffbd55":selectedShip==="defense"?"#72aaff":"#54eaff";
+  const shipColor="#54eaff";
   ctx.fillStyle=shipColor;
   ctx.shadowColor=shipColor;
   ctx.shadowBlur=16;
@@ -803,8 +862,8 @@ function drawBullets(){
       ctx.fillStyle="#fff";
       ctx.fillRect(b.x-2,b.y-15,4,28);
     }else{
-      ctx.fillStyle=b.type==="pet"?"#ffdf70":"#75f6ff";
-      ctx.shadowColor=b.type==="pet"?"#ffdf70":"#42dfff";
+      ctx.fillStyle=b.type==="pet"?"#ffdf70":b.type==="side"?"#a5ff8c":"#75f6ff";
+      ctx.shadowColor=b.type==="pet"?"#ffdf70":b.type==="side"?"#a5ff8c":"#42dfff";
       ctx.shadowBlur=12;
       ctx.fillRect(b.x-2,b.y-8,4,13);
     }
@@ -916,6 +975,18 @@ function drawEnemyBullets(){
   });
 }
 
+function drawBossBullets(){
+  bossBullets.forEach(b=>{
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);
+    ctx.fillStyle="#ff6fbd";
+    ctx.shadowColor="#ff3c9d";
+    ctx.shadowBlur=15;
+    ctx.fill();
+    ctx.shadowBlur=0;
+  });
+}
+
 function drawParticles(){
   particles.forEach(p=>{
     ctx.globalAlpha=Math.max(0,p.life/p.maxLife);
@@ -933,6 +1004,7 @@ function draw(){
   drawEnemies();
   drawMissiles();
   drawEnemyBullets();
+  drawBossBullets();
   drawBullets();
   drawPets();
   drawParticles();
@@ -945,7 +1017,8 @@ function loop(now){
 
   const dt=Math.min((now-lastTime)/1000,.035);
   lastTime=now;
-  elapsed+=dt;
+  // 보스가 살아 있는 동안에는 진행 시간과 강화 타이머를 정지
+  if(!boss)elapsed+=dt;
 
   updateStars(dt);
   updatePlayer(dt);
@@ -958,6 +1031,7 @@ function loop(now){
   updateBoss(dt);
   updateMissiles(dt);
   updateEnemyBullets(dt);
+  updateBossBullets(dt);
   updateParticles(dt);
   updateCollisions();
 
@@ -1024,7 +1098,7 @@ $("retryButton").addEventListener("click",()=>{
   gameOverOverlay.classList.remove("show");
   startOverlay.classList.add("show");
   mainButton.textContent="게임 시작";
-  message.textContent="우주선을 선택하고 다시 도전하세요!";
+  message.textContent="다시 도전할 준비가 되었습니다!";
 });
 
 mainButton.addEventListener("click",()=>{
