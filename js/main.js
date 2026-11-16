@@ -24,7 +24,7 @@
     "games/snake.html",
     "games/neon-shooter.html",
     "games/chess.html",
-    "games/tetris.html"
+    "games/minesweeper.html"
   ];
 
   // 설명 팝업 열기
