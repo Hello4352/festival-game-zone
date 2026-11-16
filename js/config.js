@@ -26,12 +26,12 @@ const SITE_CONFIG = {
   miniGames: [
     "2048",
     "벽돌 깨기",
-    "반응속도 테스트",
+    "반응속도",
     "오목",
-    "Snake",
-    "Neon Shooter",
-    "Chess AI",
-    "테트리스"
+    "bam",
+    "미사일 뿅뿅",
+    "체스",
+    "지뢰찾기"
   ]
 };
 
