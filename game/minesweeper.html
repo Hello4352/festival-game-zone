@@ -1,0 +1,1184 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1220">
+<title>지뢰찾기 | 카지노</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #080d18;
+  --panel: #111b2d;
+  --panel-light: #17243a;
+  --gold: #f5ca70;
+  --gold-light: #fff0bb;
+  --text: #edf3ff;
+  --muted: #8c9ab2;
+  --border: rgba(245, 202, 112, 0.2);
+  --neon: #48d9f5;
+  --danger: #ff5d70;
+  --success: #62e6a5;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 22px 14px 40px;
+  background:
+    radial-gradient(circle at 50% -15%, rgba(39, 76, 125, 0.35), transparent 45%),
+    linear-gradient(160deg, #0c1424, #070b14 65%);
+  color: var(--text);
+  font-family: Arial, "Malgun Gothic", sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.page {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.top-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 17px;
+}
+
+.brand {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+
+.brand-tag {
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.header {
+  text-align: center;
+  margin: 15px 0 25px;
+}
+
+.eyebrow {
+  color: var(--neon);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 9px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(34px, 7vw, 52px);
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--gold-light);
+  text-shadow: 0 0 25px rgba(245, 202, 112, 0.18);
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 9px;
+  letter-spacing: 1px;
+}
+
+.game-panel {
+  padding: 22px;
+  background: linear-gradient(145deg, rgba(19, 31, 51, 0.97), rgba(11, 19, 32, 0.98));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stat {
+  min-width: 0;
+  padding: 13px 8px;
+  text-align: center;
+  background: rgba(5, 11, 21, 0.6);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+}
+
+.stat-label {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  margin-bottom: 7px;
+}
+
+.stat-value {
+  display: block;
+  color: var(--gold-light);
+  font-family: "Courier New", monospace;
+  font-size: clamp(19px, 4vw, 27px);
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.stat-value.mines {
+  color: var(--danger);
+}
+
+.stat-value.time {
+  color: var(--neon);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 16px;
+}
+
+.section-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.difficulty {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.control-btn {
+  min-width: 90px;
+  padding: 10px 15px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+  background: #17243a;
+  color: #aebbd0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.control-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+.control-btn.active {
+  color: #15100a;
+  background: linear-gradient(135deg, #fff0bb, #e9b94e);
+  border-color: var(--gold);
+  box-shadow: 0 0 15px rgba(245, 202, 112, 0.15);
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  width: 100%;
+}
+
+.action-btn {
+  padding: 11px 17px;
+  min-height: 42px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--text);
+  background: #1a2941;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.action-btn:hover {
+  border-color: var(--neon);
+}
+
+.action-btn.flag.active {
+  color: #171008;
+  background: linear-gradient(135deg, #fff0bb, #e9b94e);
+  border-color: var(--gold);
+}
+
+.action-btn.restart {
+  color: var(--gold-light);
+  border-color: rgba(245, 202, 112, 0.35);
+}
+
+.status {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  margin: 18px 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(72, 217, 245, 0.13);
+  background: rgba(72, 217, 245, 0.045);
+  color: #a9c9d7;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.status.win {
+  color: var(--success);
+  border-color: rgba(98,230,165,0.3);
+  background: rgba(98,230,165,0.07);
+}
+
+.status.lose {
+  color: var(--danger);
+  border-color: rgba(255,93,112,0.3);
+  background: rgba(255,93,112,0.07);
+}
+
+.result-panel {
+  display: none;
+  padding: 17px;
+  margin: 0 0 15px;
+  border-radius: 12px;
+  text-align: center;
+  background: rgba(245, 202, 112, 0.07);
+  border: 1px solid var(--border);
+}
+
+.result-panel.show {
+  display: block;
+  animation: popIn 0.3s ease;
+}
+
+.result-title {
+  color: var(--gold-light);
+  font-size: 21px;
+  font-weight: 900;
+}
+
+.result-description {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.result-play {
+  margin-top: 13px;
+  padding: 10px 23px;
+  color: #171008;
+  background: linear-gradient(135deg, #fff0bb, #e9b94e);
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.board-frame {
+  width: 100%;
+  padding: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(245,202,112,0.18);
+  border-radius: 14px;
+  background: rgba(4, 9, 17, 0.72);
+}
+
+.board-viewport {
+  max-width: 100%;
+  overflow: auto;
+  padding: 5px;
+  scrollbar-color: #46566e #0c1423;
+  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
+}
+
+.board {
+  display: grid;
+  width: max-content;
+  gap: 3px;
+  margin: 0 auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.board.easy {
+  --cell-size: clamp(30px, 8vw, 38px);
+}
+
+.board.medium {
+  --cell-size: clamp(23px, 6.2vw, 32px);
+}
+
+.board.hard {
+  --cell-size: clamp(19px, 4.7vw, 26px);
+}
+
+.cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  padding: 0;
+  border: 1px solid #34445e;
+  border-radius: 4px;
+  color: #fff;
+  background: linear-gradient(145deg, #30415d, #1d2b43);
+  box-shadow:
+    inset 1px 1px 1px rgba(255,255,255,0.08),
+    0 2px 2px rgba(0,0,0,0.3);
+  font-size: clamp(12px, 3vw, 17px);
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.08s, transform 0.08s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cell:not(.revealed):active {
+  transform: scale(0.92);
+  background: #405779;
+}
+
+.cell.revealed {
+  cursor: default;
+  background: #111c2e;
+  border-color: #263850;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.35);
+}
+
+.cell.flagged {
+  color: var(--gold-light);
+  background: linear-gradient(145deg, #35435b, #202e44);
+}
+
+.cell.mine {
+  background: rgba(255, 93, 112, 0.2);
+  border-color: var(--danger);
+}
+
+.cell.exploded {
+  background: #a92f43;
+  border-color: #ff9aa5;
+  box-shadow: 0 0 12px rgba(255,93,112,0.5);
+}
+
+.cell.wrong-flag {
+  background: rgba(255,93,112,0.12);
+  border-color: var(--danger);
+}
+
+.cell.number-1 { color: #65b8ff; }
+.cell.number-2 { color: #62e6a5; }
+.cell.number-3 { color: #ff7486; }
+.cell.number-4 { color: #a88aff; }
+.cell.number-5 { color: #ffb65d; }
+.cell.number-6 { color: #52dce0; }
+.cell.number-7 { color: #f4f5fa; }
+.cell.number-8 { color: #aab4c4; }
+
+.legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 17px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-icon {
+  font-size: 14px;
+}
+
+.guide {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.guide-item {
+  padding: 13px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+}
+
+.guide-title {
+  margin-bottom: 5px;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.guide-text {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.footer {
+  margin-top: 22px;
+  text-align: center;
+  color: #526079;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 14px 9px 30px;
+  }
+
+  .game-panel {
+    padding: 13px 9px;
+    border-radius: 15px;
+  }
+
+  .stats {
+    gap: 6px;
+  }
+
+  .stat {
+    padding: 11px 4px;
+  }
+
+  .difficulty {
+    gap: 5px;
+  }
+
+  .control-btn {
+    min-width: 0;
+    flex: 1;
+    padding: 10px 5px;
+    font-size: 11px;
+  }
+
+  .action-btn {
+    padding: 10px 13px;
+  }
+
+  .board-frame {
+    padding: 5px;
+  }
+
+  .board-viewport {
+    padding: 3px;
+  }
+
+  .guide {
+    gap: 7px;
+  }
+
+  .guide-item {
+    padding: 10px;
+  }
+
+  .legend {
+    gap: 11px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+  <div class="top-brand">
+    <div class="brand">CASINO</div>
+    <div class="brand-tag">ARCADE GAME</div>
+  </div>
+
+  <header class="header">
+    <div class="eyebrow">CLASSIC PUZZLE</div>
+    <h1>지뢰찾기</h1>
+    <div class="subtitle">FIND THE MINES · CLEAR THE BOARD</div>
+  </header>
+
+  <main class="game-panel">
+
+    <section class="stats">
+      <div class="stat">
+        <span class="stat-label">MINES LEFT</span>
+        <span class="stat-value mines" id="mineCounter">010</span>
+      </div>
+
+      <div class="stat">
+        <span class="stat-label">TIME</span>
+        <span class="stat-value time" id="timer">00:00</span>
+      </div>
+
+      <div class="stat">
+        <span class="stat-label">BEST RECORD</span>
+        <span class="stat-value" id="bestTime">--:--</span>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="section-label">SELECT DIFFICULTY</div>
+
+      <div class="difficulty">
+        <button class="control-btn active" data-level="easy">초급</button>
+        <button class="control-btn" data-level="medium">중급</button>
+        <button class="control-btn" data-level="hard">고급</button>
+      </div>
+
+      <div class="action-row">
+        <button class="action-btn flag" id="flagModeBtn" aria-pressed="false">
+          🚩 깃발 모드 OFF
+        </button>
+
+        <button class="action-btn restart" id="restartBtn">
+          ↻ 새 게임
+        </button>
+      </div>
+    </section>
+
+    <div class="status" id="status">
+      칸을 선택해 게임을 시작하세요. 첫 클릭은 안전합니다!
+    </div>
+
+    <section class="result-panel" id="resultPanel">
+      <div class="result-title" id="resultTitle">게임 종료</div>
+      <div class="result-description" id="resultDescription"></div>
+      <button class="result-play" id="resultPlay">다시 도전하기</button>
+    </section>
+
+    <div class="board-frame">
+      <div class="board-viewport" id="boardViewport">
+        <div class="board easy" id="board"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="legend-icon">💣</span> 지뢰</span>
+      <span><span class="legend-icon">🚩</span> 깃발</span>
+      <span><span class="legend-icon">1~8</span> 주변 지뢰 수</span>
+    </div>
+
+    <section class="guide">
+      <div class="guide-item">
+        <div class="guide-title">HOW TO PLAY</div>
+        <div class="guide-text">
+          칸을 눌러 열어 보세요. 숫자는 주변 8칸에 있는 지뢰의 개수입니다.
+        </div>
+      </div>
+
+      <div class="guide-item">
+        <div class="guide-title">FLAG MODE</div>
+        <div class="guide-text">
+          깃발 모드를 켜고 지뢰가 있다고 생각하는 칸을 누르면 깃발이 설치됩니다.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    CASINO · MINESWEEPER
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+
+  const boardElement = $("board");
+  const mineCounter = $("mineCounter");
+  const timerElement = $("timer");
+  const bestTimeElement = $("bestTime");
+  const statusElement = $("status");
+  const flagModeBtn = $("flagModeBtn");
+  const restartBtn = $("restartBtn");
+  const resultPanel = $("resultPanel");
+  const resultTitle = $("resultTitle");
+  const resultDescription = $("resultDescription");
+  const resultPlay = $("resultPlay");
+
+  const DIFFICULTIES = {
+    easy: {
+      name: "초급",
+      rows: 9,
+      cols: 9,
+      mines: 10
+    },
+    medium: {
+      name: "중급",
+      rows: 16,
+      cols: 16,
+      mines: 40
+    },
+    hard: {
+      name: "고급",
+      rows: 16,
+      cols: 30,
+      mines: 99
+    }
+  };
+
+  const RECORD_KEY = "casino_minesweeper_records_v1";
+
+  let level = "easy";
+  let config = DIFFICULTIES[level];
+
+  let cells = [];
+  let cellElements = [];
+
+  let flagCount = 0;
+  let elapsed = 0;
+  let timerId = null;
+
+  let state = "ready";
+  let firstClick = true;
+  let flagMode = false;
+  let explodedIndex = -1;
+
+  let records = loadRecords();
+
+  function loadRecords() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(RECORD_KEY));
+
+      return {
+        easy: saved?.easy ?? null,
+        medium: saved?.medium ?? null,
+        hard: saved?.hard ?? null
+      };
+    } catch (error) {
+      return {
+        easy: null,
+        medium: null,
+        hard: null
+      };
+    }
+  }
+
+  function saveRecords() {
+    try {
+      localStorage.setItem(RECORD_KEY, JSON.stringify(records));
+    } catch (error) {
+      console.warn("기록을 저장하지 못했습니다.", error);
+    }
+  }
+
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return (
+      String(minutes).padStart(2, "0") +
+      ":" +
+      String(remainingSeconds).padStart(2, "0")
+    );
+  }
+
+  function updateStats() {
+    const left = config.mines - flagCount;
+
+    mineCounter.textContent =
+      left < 0
+        ? "-" + String(Math.abs(left)).padStart(2, "0")
+        : String(left).padStart(3, "0");
+
+    timerElement.textContent = formatTime(elapsed);
+
+    const best = records[level];
+
+    bestTimeElement.textContent =
+      best === null ? "--:--" : formatTime(best);
+  }
+
+  function setStatus(message, type = "") {
+    statusElement.textContent = message;
+    statusElement.className = "status";
+
+    if (type) {
+      statusElement.classList.add(type);
+    }
+  }
+
+  function setFlagMode(enabled) {
+    flagMode = enabled;
+
+    flagModeBtn.classList.toggle("active", flagMode);
+    flagModeBtn.setAttribute("aria-pressed", String(flagMode));
+
+    flagModeBtn.textContent = flagMode
+      ? "🚩 깃발 모드 ON"
+      : "🚩 깃발 모드 OFF";
+
+    if (state === "ready") {
+      setStatus(
+        flagMode
+          ? "깃발 모드입니다. 지뢰가 의심되는 칸을 선택하세요."
+          : "칸을 선택해 게임을 시작하세요. 첫 클릭은 안전합니다!"
+      );
+    } else if (state === "playing") {
+      setStatus(
+        flagMode
+          ? "깃발 모드입니다. 지뢰가 의심되는 칸을 선택하세요."
+          : "칸을 선택해 안전한 구역을 찾아보세요."
+      );
+    }
+  }
+
+  function getNeighbors(index) {
+    const row = Math.floor(index / config.cols);
+    const col = index % config.cols;
+    const result = [];
+
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+
+        const newRow = row + dr;
+        const newCol = col + dc;
+
+        if (
+          newRow >= 0 &&
+          newRow < config.rows &&
+          newCol >= 0 &&
+          newCol < config.cols
+        ) {
+          result.push(newRow * config.cols + newCol);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  function createBoard() {
+    cells = [];
+    cellElements = [];
+
+    flagCount = 0;
+    elapsed = 0;
+    state = "ready";
+    firstClick = true;
+    explodedIndex = -1;
+
+    stopTimer();
+    setFlagMode(false);
+
+    resultPanel.classList.remove("show");
+    setStatus("칸을 선택해 게임을 시작하세요. 첫 클릭은 안전합니다!");
+
+    boardElement.className = "board " + level;
+    boardElement.style.gridTemplateColumns =
+      `repeat(${config.cols}, var(--cell-size))`;
+
+    boardElement.innerHTML = "";
+
+    const fragment = document.createDocumentFragment();
+
+    const total = config.rows * config.cols;
+
+    for (let i = 0; i < total; i++) {
+      cells.push({
+        mine: false,
+        adjacent: 0,
+        revealed: false,
+        flagged: false
+      });
+
+      const button = document.createElement("button");
+
+      button.type = "button";
+      button.className = "cell";
+      button.dataset.index = i;
+      button.setAttribute("aria-label", "닫힌 칸");
+
+      fragment.appendChild(button);
+      cellElements.push(button);
+    }
+
+    boardElement.appendChild(fragment);
+
+    updateStats();
+  }
+
+  function placeMines(safeIndex) {
+    const safeZone = new Set([
+      safeIndex,
+      ...getNeighbors(safeIndex)
+    ]);
+
+    const candidates = [];
+
+    for (let i = 0; i < cells.length; i++) {
+      if (!safeZone.has(i)) {
+        candidates.push(i);
+      }
+    }
+
+    // Fisher-Yates 셔플
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] =
+        [candidates[j], candidates[i]];
+    }
+
+    for (let i = 0; i < config.mines; i++) {
+      cells[candidates[i]].mine = true;
+    }
+
+    // 각 칸 주변 지뢰 개수 계산
+    for (let i = 0; i < cells.length; i++) {
+      if (cells[i].mine) continue;
+
+      const neighbors = getNeighbors(i);
+
+      cells[i].adjacent = neighbors.filter(
+        (neighbor) => cells[neighbor].mine
+      ).length;
+    }
+
+    firstClick = false;
+  }
+
+  function startTimer() {
+    if (timerId !== null) return;
+
+    timerId = window.setInterval(() => {
+      elapsed++;
+      updateStats();
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerId !== null) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  function renderCell(index) {
+    const cell = cells[index];
+    const element = cellElements[index];
+
+    element.className = "cell";
+    element.textContent = "";
+    element.disabled = state === "won" || state === "lost";
+
+    if (cell.revealed) {
+      element.classList.add("revealed");
+
+      if (cell.mine) {
+        element.classList.add("mine");
+
+        if (index === explodedIndex) {
+          element.classList.add("exploded");
+        }
+
+        element.textContent = "💣";
+        element.setAttribute("aria-label", "지뢰");
+
+      } else if (cell.adjacent > 0) {
+        element.textContent = String(cell.adjacent);
+        element.classList.add("number-" + cell.adjacent);
+        element.setAttribute(
+          "aria-label",
+          "주변 지뢰 " + cell.adjacent + "개"
+        );
+
+      } else {
+        element.setAttribute("aria-label", "빈칸");
+      }
+
+    } else if (cell.flagged) {
+      element.classList.add("flagged");
+      element.textContent = "🚩";
+      element.setAttribute("aria-label", "깃발");
+
+      if (state === "lost" && !cell.mine) {
+        element.classList.add("wrong-flag");
+        element.textContent = "❌";
+      }
+
+    } else {
+      element.setAttribute("aria-label", "닫힌 칸");
+    }
+  }
+
+  function renderAll() {
+    for (let i = 0; i < cells.length; i++) {
+      renderCell(i);
+    }
+  }
+
+  function revealCell(index) {
+    if (state === "won" || state === "lost") return;
+
+    const cell = cells[index];
+
+    if (cell.revealed || cell.flagged) return;
+
+    if (firstClick) {
+      placeMines(index);
+      state = "playing";
+      startTimer();
+    }
+
+    if (cell.mine) {
+      explodedIndex = index;
+      endGame(false);
+      return;
+    }
+
+    // 빈칸 자동 열기
+    const stack = [index];
+
+    while (stack.length > 0) {
+      const currentIndex = stack.pop();
+      const current = cells[currentIndex];
+
+      if (
+        current.revealed ||
+        current.flagged ||
+        current.mine
+      ) {
+        continue;
+      }
+
+      current.revealed = true;
+      renderCell(currentIndex);
+
+      if (current.adjacent === 0) {
+        const neighbors = getNeighbors(currentIndex);
+
+        for (const neighborIndex of neighbors) {
+          const neighbor = cells[neighborIndex];
+
+          if (
+            !neighbor.revealed &&
+            !neighbor.flagged &&
+            !neighbor.mine
+          ) {
+            stack.push(neighborIndex);
+          }
+        }
+      }
+    }
+
+    checkWin();
+  }
+
+  function toggleFlag(index) {
+    if (state === "won" || state === "lost") return;
+
+    const cell = cells[index];
+
+    if (cell.revealed) return;
+
+    cell.flagged = !cell.flagged;
+
+    if (cell.flagged) {
+      flagCount++;
+    } else {
+      flagCount--;
+    }
+
+    renderCell(index);
+    updateStats();
+  }
+
+  function checkWin() {
+    const cleared = cells.every(
+      (cell) => cell.mine || cell.revealed
+    );
+
+    if (cleared) {
+      endGame(true);
+    }
+  }
+
+  function endGame(won) {
+    stopTimer();
+
+    if (won) {
+      state = "won";
+
+      // 남아 있는 지뢰에 자동으로 깃발 표시
+      for (const cell of cells) {
+        if (cell.mine && !cell.flagged) {
+          cell.flagged = true;
+          flagCount++;
+        }
+      }
+
+      let newRecord = false;
+
+      if (
+        records[level] === null ||
+        elapsed < records[level]
+      ) {
+        records[level] = elapsed;
+        saveRecords();
+        newRecord = true;
+      }
+
+      setStatus(
+        "축하합니다! 모든 안전한 칸을 찾았습니다.",
+        "win"
+      );
+
+      resultTitle.textContent = "🏆 CLEAR!";
+      resultDescription.textContent =
+        formatTime(elapsed) +
+        " · " +
+        (newRecord ? "신기록 달성!" : "최고 기록에 도전하세요!");
+
+    } else {
+      state = "lost";
+
+      // 모든 지뢰 공개
+      for (let i = 0; i < cells.length; i++) {
+        if (cells[i].mine) {
+          cells[i].revealed = true;
+        }
+      }
+
+      setStatus(
+        "지뢰를 밟았습니다! 다시 도전해 보세요.",
+        "lose"
+      );
+
+      resultTitle.textContent = "💥 GAME OVER";
+      resultDescription.textContent =
+        "기록: " + formatTime(elapsed) +
+        " · 다음 도전에서는 성공해 보세요!";
+    }
+
+    renderAll();
+    updateStats();
+
+    resultPanel.classList.add("show");
+  }
+
+  function changeDifficulty(nextLevel) {
+    if (!DIFFICULTIES[nextLevel]) return;
+
+    level = nextLevel;
+    config = DIFFICULTIES[level];
+
+    document.querySelectorAll("[data-level]").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.level === level
+      );
+    });
+
+    createBoard();
+  }
+
+  function handleBoardClick(event) {
+    const button = event.target.closest(".cell");
+
+    if (!button || !boardElement.contains(button)) return;
+
+    const index = Number(button.dataset.index);
+
+    if (!Number.isInteger(index)) return;
+
+    if (flagMode) {
+      toggleFlag(index);
+    } else {
+      revealCell(index);
+    }
+  }
+
+  // 칸 클릭
+  boardElement.addEventListener("click", handleBoardClick);
+
+  // PC 마우스 오른쪽 클릭으로 깃발 설치
+  boardElement.addEventListener("contextmenu", (event) => {
+    const button = event.target.closest(".cell");
+
+    if (!button) return;
+
+    event.preventDefault();
+
+    const index = Number(button.dataset.index);
+
+    if (Number.isInteger(index)) {
+      toggleFlag(index);
+    }
+  });
+
+  // 난이도 버튼
+  document.querySelectorAll("[data-level]").forEach((button) => {
+    button.addEventListener("click", () => {
+      changeDifficulty(button.dataset.level);
+    });
+  });
+
+  // 깃발 모드
+  flagModeBtn.addEventListener("click", () => {
+    setFlagMode(!flagMode);
+  });
+
+  // 새 게임
+  restartBtn.addEventListener("click", createBoard);
+
+  // 결과 화면에서 다시 도전
+  resultPlay.addEventListener("click", createBoard);
+
+  // 처음 실행
+  createBoard();
+
+})();
+</script>
+
+</body>
+</html>
