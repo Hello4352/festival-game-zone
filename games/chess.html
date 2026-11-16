@@ -2,582 +2,2518 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1220">
-  <title>Chess AI | 카지노</title>
-  <style>
-    * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080d19">
+<title>Chess AI | 카지노</title>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 20px 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #0b1220;
-      color: #f5f0df;
-      font-family: Arial, sans-serif;
-    }
+<style>
+* { box-sizing: border-box; }
 
-    .game {
-      width: 100%;
-      max-width: 520px;
-      text-align: center;
-    }
+:root {
+  --gold: #f3c969;
+  --gold-light: #ffe4a0;
+  --bg: #080d19;
+  --panel: #111a2b;
+  --text: #edf2fa;
+  --muted: #93a2b9;
+}
 
-    h1 { color: #e9c76b; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 18px;
+  background: radial-gradient(circle at top, #1a2941 0%, #080d19 55%);
+  color: var(--text);
+  font-family: Arial, "Malgun Gothic", sans-serif;
+}
 
-    .description {
-      color: #b8c0ce;
-      line-height: 1.5;
-    }
+button, select { font: inherit; }
+button { cursor: pointer; }
 
-    .status {
-      padding: 13px;
-      margin: 18px 0;
-      border: 1px solid #d6ad4c;
-      border-radius: 10px;
-      background: #17243a;
-      font-weight: bold;
-    }
+.topbar {
+  max-width: 1050px;
+  margin: 0 auto 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    .board {
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      width: 100%;
-      aspect-ratio: 1;
-      border: 4px solid #d6ad4c;
-      border-radius: 5px;
-      overflow: hidden;
-    }
+.back {
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 800;
+}
 
-    .square {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      font-size: clamp(23px, 8vw, 43px);
-      cursor: pointer;
-      user-select: none;
-      aspect-ratio: 1;
-    }
+.logo {
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
 
-    .light { background: #e9d5ad; }
-    .dark { background: #8b6546; }
+.app {
+  width: 100%;
+  max-width: 1050px;
+  margin: auto;
+}
 
-    .selected {
-      background: #d6c34c !important;
-    }
+.title {
+  margin: 0 0 7px;
+  text-align: center;
+  font-size: 30px;
+  color: var(--gold);
+}
 
-    .possible::after {
-      content: "";
-      position: absolute;
-      width: 22%;
-      height: 22%;
-      border-radius: 50%;
-      background: #1b9b65aa;
-    }
+.subtitle {
+  margin: 0 0 22px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
 
-    .buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-    }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 18px;
+}
 
-    .buttons button {
-      flex: 1;
-      padding: 14px;
-      border: 0;
-      border-radius: 10px;
-      background: #e9c76b;
-      color: #172033;
-      font-weight: bold;
-      font-size: 15px;
-      cursor: pointer;
-    }
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  background: var(--panel);
+  border: 1px solid #2c3c55;
+  border-radius: 10px;
+}
 
-    .back {
-      display: inline-block;
-      margin-top: 22px;
-      color: #e9c76b;
-      text-decoration: none;
-    }
-  </style>
+.control-group label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+select {
+  color: white;
+  background: #202e45;
+  border: 1px solid #40516a;
+  border-radius: 6px;
+  padding: 7px 9px;
+  outline: none;
+}
+
+.new-game {
+  padding: 10px 17px;
+  color: #15100a;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  border: 0;
+  border-radius: 9px;
+  font-weight: 900;
+}
+
+.new-game:hover { filter: brightness(1.08); }
+
+.game-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(230px, 0.75fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.board-section { min-width: 0; }
+
+.status-box {
+  margin-bottom: 12px;
+  padding: 13px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid #34445c;
+  border-radius: 10px;
+}
+
+#status {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+#subStatus {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.board-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  gap: 0;
+  width: min(100%, 620px);
+  aspect-ratio: 1 / 1;
+  border: 5px solid #8d683b;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 12px 35px #0008;
+}
+
+.square {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.square.light { background: #f0d9b5; }
+.square.dark { background: #b58863; }
+.square.selected { background: #c9bd45; }
+
+.square.last-move {
+  background-image: linear-gradient(#facc1544, #facc1544);
+}
+
+.square.check-square { background: #df5959 !important; }
+
+.piece {
+  position: relative;
+  z-index: 2;
+  display: block;
+  line-height: 1;
+  font-family: "Segoe UI Symbol", "DejaVu Sans", serif;
+  font-size: clamp(22px, 6.7vw, 66px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.piece.white-piece {
+  color: #fffdf4;
+  text-shadow: 1px 1px 1px #282828,
+    -1px -1px 1px #282828, 2px 2px 2px #444;
+}
+
+.piece.black-piece {
+  color: #171717;
+  text-shadow: 0 1px 1px #ffffff66;
+}
+
+.square.legal-target::after {
+  content: "";
+  position: absolute;
+  width: 25%;
+  height: 25%;
+  border-radius: 50%;
+  background: #166534aa;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.square.capture-target::after {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  border: 5px solid #166534aa;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.coordinate {
+  position: absolute;
+  z-index: 3;
+  font-size: clamp(8px, 1.6vw, 12px);
+  font-weight: 800;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.rank-label { top: 3px; left: 4px; }
+.file-label { right: 4px; bottom: 3px; }
+
+.light .coordinate { color: #805c3c; }
+.dark .coordinate { color: #f5e4d0; }
+
+.board-note {
+  margin-top: 10px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 11px;
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
+}
+
+.panel {
+  padding: 15px;
+  background: var(--panel);
+  border: 1px solid #2c3c55;
+  border-radius: 12px;
+}
+
+.panel h3 {
+  margin: 0 0 12px;
+  color: var(--gold);
+  font-size: 15px;
+}
+
+.mode-info {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+#moveHistory {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.move-row {
+  display: grid;
+  grid-template-columns: 35px 1fr 1fr;
+  gap: 8px;
+  padding: 7px 5px;
+  border-bottom: 1px solid #27354a;
+  font-size: 13px;
+}
+
+.move-number { color: var(--muted); }
+
+.captured-area {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.captured-pieces {
+  min-height: 25px;
+  color: white;
+  font-family: "Segoe UI Symbol", serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  overflow-wrap: anywhere;
+}
+
+.rules {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.rules strong { color: var(--gold-light); }
+
+.promotion-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #000b;
+}
+
+.promotion-overlay.show { display: flex; }
+
+.promotion-box {
+  width: min(100%, 360px);
+  padding: 22px;
+  text-align: center;
+  background: #152137;
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  box-shadow: 0 15px 45px #0009;
+}
+
+.promotion-box h3 {
+  margin: 0 0 18px;
+  color: var(--gold);
+}
+
+.promotion-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.promotion-choice {
+  padding: 12px 4px;
+  background: #263752;
+  border: 1px solid #526782;
+  border-radius: 9px;
+  color: white;
+}
+
+.promotion-choice:hover { background: #3a506f; }
+
+.promotion-piece {
+  display: block;
+  font-family: "Segoe UI Symbol", serif;
+  font-size: 38px;
+}
+
+.promotion-name {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+}
+
+.footer {
+  margin-top: 25px;
+  text-align: center;
+  color: #68778e;
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  body { padding: 12px; }
+
+  .game-layout { grid-template-columns: 1fr; }
+
+  .side-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .side-panel .history-panel {
+    grid-column: 1 / -1;
+  }
+
+  #board { width: min(100%, 560px); }
+}
+
+@media (max-width: 430px) {
+  .side-panel { display: flex; }
+  .logo { font-size: 19px; }
+  .title { font-size: 25px; }
+  .controls { gap: 6px; }
+  .control-group { padding: 6px; }
+  .control-group label { font-size: 11px; }
+  select { max-width: 125px; font-size: 12px; }
+}
+</style>
 </head>
+
 <body>
-  <main class="game">
-    <h1>Chess AI</h1>
-    <p class="description">
-      흰색 말을 조작해 컴퓨터와 대결하세요.<br>
-      상대 왕을 체크메이트하면 승리합니다!
-    </p>
 
-    <div class="status" id="status">흰색 차례</div>
-    <div class="board" id="board"></div>
+<header class="topbar">
+  <a class="back" href="../index.html">← 카지노</a>
+  <div class="logo">CASINO</div>
+</header>
 
-    <div class="buttons">
-      <button id="restart">새 게임</button>
+<main class="app">
+  <h1 class="title">CHESS</h1>
+  <p class="subtitle">전략과 판단으로 승리하세요</p>
+
+  <section class="controls">
+    <div class="control-group">
+      <label for="modeSelect">대전 방식</label>
+      <select id="modeSelect">
+        <option value="ai">AI 대전</option>
+        <option value="two">2인 대전</option>
+      </select>
     </div>
 
-    <a class="back" href="../index.html">← 카지노 메인으로</a>
-  </main>
+    <div class="control-group" id="difficultyGroup">
+      <label for="difficultySelect">AI 난이도</label>
+      <select id="difficultySelect">
+        <option value="easy">쉬움</option>
+        <option value="normal" selected>보통</option>
+        <option value="hard">어려움</option>
+      </select>
+    </div>
 
-  <script>
-    const boardElement = document.getElementById("board");
-    const statusElement = document.getElementById("status");
-    const restartButton = document.getElementById("restart");
+    <button class="new-game" id="newGameButton">새 게임 시작</button>
+  </section>
 
-    const symbols = {
-      wk: "♔", wq: "♕", wr: "♖", wb: "♗", wn: "♘", wp: "♙",
-      bk: "♚", bq: "♛", br: "♜", bb: "♝", bn: "♞", bp: "♟"
-    };
+  <section class="game-layout">
+    <div class="board-section">
+      <div class="status-box">
+        <div id="status">백 차례</div>
+        <div id="subStatus">백 플레이어 vs 흑 AI</div>
+      </div>
 
-    const initial = [
-      ["br","bn","bb","bq","bk","bb","bn","br"],
-      ["bp","bp","bp","bp","bp","bp","bp","bp"],
-      [null,null,null,null,null,null,null,null],
-      [null,null,null,null,null,null,null,null],
-      [null,null,null,null,null,null,null,null],
-      [null,null,null,null,null,null,null,null],
-      ["wp","wp","wp","wp","wp","wp","wp","wp"],
-      ["wr","wn","wb","wq","wk","wb","wn","wr"]
-    ];
+      <div class="board-wrap">
+        <div id="board" aria-label="체스판"></div>
+      </div>
 
-    let board;
-    let selected = null;
-    let legalMoves = [];
-    let turn = "w";
-    let gameOver = false;
-    let aiThinking = false;
+      <div class="board-note">
+        기물을 선택한 뒤 표시된 칸을 누르세요.
+      </div>
+    </div>
 
-    const inside = (r,c) =>
-      r >= 0 && r < 8 && c >= 0 && c < 8;
+    <aside class="side-panel">
+      <section class="panel">
+        <h3>대전 정보</h3>
+        <div class="mode-info" id="gameInfo">
+          백: 플레이어<br>흑: 인공지능
+        </div>
+      </section>
 
-    const colorOf = piece => piece ? piece[0] : null;
-    const typeOf = piece => piece ? piece[1] : null;
+      <section class="panel history-panel">
+        <h3>이동 기록</h3>
+        <div id="moveHistory">아직 이동 기록이 없습니다.</div>
+      </section>
 
-    function copyBoard(source) {
-      return source.map(row => [...row]);
+      <section class="panel">
+        <h3>잡은 기물</h3>
+        <div class="captured-area">
+          <div>백이 잡은 기물</div>
+          <div class="captured-pieces" id="whiteCaptured"></div>
+          <div>흑이 잡은 기물</div>
+          <div class="captured-pieces" id="blackCaptured"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>체스 규칙</h3>
+        <div class="rules">
+          <strong>특수 규칙</strong><br>
+          캐슬링, 앙파상, 프로모션 지원<br><br>
+          <strong>승리 조건</strong><br>
+          체크메이트 시 승리<br><br>
+          <strong>무승부 조건</strong><br>
+          스테일메이트, 기물 부족,
+          5회 반복, 75수 규칙
+        </div>
+      </section>
+    </aside>
+  </section>
+
+  <div class="footer">CHESS AI · CASINO</div>
+</main>
+
+<div class="promotion-overlay" id="promotionModal">
+  <div class="promotion-box">
+    <h3>프로모션 기물 선택</h3>
+    <div class="promotion-options" id="promotionOptions"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* =================================
+   기본 설정
+================================= */
+
+const SYMBOLS = {
+  K:"♔", Q:"♕", R:"♖", B:"♗", N:"♘", P:"♙",
+  k:"♚", q:"♛", r:"♜", b:"♝", n:"♞", p:"♟︎"
+};
+
+const PIECE_NAMES = {
+  Q:"퀸", R:"룩", B:"비숍", N:"나이트"
+};
+
+const FILES = "abcdefgh";
+
+const KNIGHT_STEPS = [
+  [-2,-1],[-2,1],[-1,-2],[-1,2],
+  [1,-2],[1,2],[2,-1],[2,1]
+];
+
+const KING_STEPS = [
+  [-1,-1],[-1,0],[-1,1],
+  [0,-1],[0,1],
+  [1,-1],[1,0],[1,1]
+];
+
+const BISHOP_DIRS = [
+  [-1,-1],[-1,1],[1,-1],[1,1]
+];
+
+const ROOK_DIRS = [
+  [-1,0],[1,0],[0,-1],[0,1]
+];
+
+const QUEEN_DIRS = [
+  ...BISHOP_DIRS,
+  ...ROOK_DIRS
+];
+
+const PIECE_VALUES = {
+  p:100, n:320, b:335, r:500, q:900, k:20000
+};
+
+const MATE_SCORE = 100000;
+
+
+/* =================================
+   DOM 요소
+================================= */
+
+const boardElement = document.getElementById("board");
+const statusElement = document.getElementById("status");
+const subStatusElement = document.getElementById("subStatus");
+const moveHistoryElement = document.getElementById("moveHistory");
+const modeSelect = document.getElementById("modeSelect");
+const difficultySelect = document.getElementById("difficultySelect");
+const difficultyGroup = document.getElementById("difficultyGroup");
+const gameInfoElement = document.getElementById("gameInfo");
+const promotionModal = document.getElementById("promotionModal");
+const promotionOptions = document.getElementById("promotionOptions");
+
+
+/* =================================
+   게임 상태
+================================= */
+
+let game;
+let mode = "ai";
+let difficulty = "normal";
+
+let selectedSquare = null;
+let pendingPromotion = null;
+let aiThinking = false;
+
+let moveLog = [];
+let gameVersion = 0;
+let squareButtons = [];
+
+
+/* =================================
+   좌표 및 기물 유틸리티
+================================= */
+
+function rowOf(index) {
+  return Math.floor(index / 8);
+}
+
+function colOf(index) {
+  return index % 8;
+}
+
+function toIndex(row, col) {
+  if (row < 0 || row > 7 || col < 0 || col > 7) {
+    return -1;
+  }
+
+  return row * 8 + col;
+}
+
+function squareName(index) {
+  return FILES[colOf(index)] + (8 - rowOf(index));
+}
+
+function colorOf(piece) {
+  if (!piece) return null;
+  return piece === piece.toUpperCase() ? "w" : "b";
+}
+
+function opposite(color) {
+  return color === "w" ? "b" : "w";
+}
+
+function initialGame() {
+  const board = Array(64).fill(null);
+  const backRank = ["R","N","B","Q","K","B","N","R"];
+
+  for (let c = 0; c < 8; c++) {
+    board[c] = backRank[c].toLowerCase();
+    board[8 + c] = "p";
+    board[48 + c] = "P";
+    board[56 + c] = backRank[c];
+  }
+
+  const state = {
+    board,
+    turn:"w",
+    castling:"KQkq",
+    ep:null,
+    halfmove:0,
+    fullmove:1,
+    lastMove:null,
+    positionHistory:[]
+  };
+
+  state.positionHistory = [positionKey(state)];
+  return state;
+}
+
+
+/* =================================
+   왕 위치와 공격 판정
+================================= */
+
+function findKing(state, color) {
+  return state.board.indexOf(color === "w" ? "K" : "k");
+}
+
+function isSquareAttacked(state, target, byColor) {
+  if (target < 0 || target >= 64) return false;
+
+  const targetRow = rowOf(target);
+  const targetCol = colOf(target);
+
+  for (let from = 0; from < 64; from++) {
+    const piece = state.board[from];
+
+    if (!piece || colorOf(piece) !== byColor) continue;
+
+    const type = piece.toLowerCase();
+    const row = rowOf(from);
+    const col = colOf(from);
+
+    if (type === "p") {
+      const dir = byColor === "w" ? -1 : 1;
+
+      if (
+        targetRow === row + dir &&
+        Math.abs(targetCol - col) === 1
+      ) {
+        return true;
+      }
+
+      continue;
     }
 
-    function resetGame() {
-      board = copyBoard(initial);
-      selected = null;
-      legalMoves = [];
-      turn = "w";
-      gameOver = false;
-      aiThinking = false;
-      statusElement.textContent = "흰색 차례";
-      render();
-    }
-
-    function pseudoMoves(state, r, c) {
-      const piece = state[r][c];
-      if (!piece) return [];
-
-      const color = colorOf(piece);
-      const type = typeOf(piece);
-      const moves = [];
-
-      const add = (nr,nc) => {
-        if (!inside(nr,nc)) return false;
-
-        const target = state[nr][nc];
-
-        if (!target) {
-          moves.push([nr,nc]);
+    if (type === "n") {
+      for (const [dr, dc] of KNIGHT_STEPS) {
+        if (row + dr === targetRow && col + dc === targetCol) {
           return true;
         }
+      }
 
-        if (colorOf(target) !== color && typeOf(target) !== "k") {
-          moves.push([nr,nc]);
+      continue;
+    }
+
+    if (type === "k") {
+      for (const [dr, dc] of KING_STEPS) {
+        if (row + dr === targetRow && col + dc === targetCol) {
+          return true;
+        }
+      }
+
+      continue;
+    }
+
+    let directions = [];
+
+    if (type === "b") directions = BISHOP_DIRS;
+    if (type === "r") directions = ROOK_DIRS;
+    if (type === "q") directions = QUEEN_DIRS;
+
+    for (const [dr, dc] of directions) {
+      let r = row + dr;
+      let c = col + dc;
+
+      while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+        const targetIndex = toIndex(r, c);
+
+        if (targetIndex === target) return true;
+        if (state.board[targetIndex]) break;
+
+        r += dr;
+        c += dc;
+      }
+    }
+  }
+
+  return false;
+}
+
+function isInCheck(state, color = state.turn) {
+  const kingIndex = findKing(state, color);
+
+  if (kingIndex < 0) return true;
+
+  return isSquareAttacked(
+    state,
+    kingIndex,
+    opposite(color)
+  );
+}
+
+
+/* =================================
+   이동 생성
+================================= */
+
+function addMove(moves, state, from, to, extra = {}) {
+  const target = state.board[to];
+
+  if (target && colorOf(target) === state.turn) return;
+  if (target && target.toLowerCase() === "k") return;
+
+  const piece = state.board[from];
+  const type = piece.toLowerCase();
+  const row = rowOf(to);
+
+  if (type === "p" && (row === 0 || row === 7)) {
+    for (const promotion of ["Q","R","B","N"]) {
+      moves.push({from,to,promotion,...extra});
+    }
+    return;
+  }
+
+  moves.push({from,to,...extra});
+}
+
+function generatePseudoMoves(state) {
+  const moves = [];
+  const color = state.turn;
+
+  for (let from = 0; from < 64; from++) {
+    const piece = state.board[from];
+
+    if (!piece || colorOf(piece) !== color) continue;
+
+    const type = piece.toLowerCase();
+    const row = rowOf(from);
+    const col = colOf(from);
+
+    if (type === "p") {
+      const dir = color === "w" ? -1 : 1;
+      const startRow = color === "w" ? 6 : 1;
+
+      const one = toIndex(row + dir, col);
+
+      if (one >= 0 && !state.board[one]) {
+        addMove(moves,state,from,one);
+
+        const two = toIndex(row + dir * 2,col);
+
+        if (row === startRow && two >= 0 && !state.board[two]) {
+          addMove(moves,state,from,two);
+        }
+      }
+
+      for (const dc of [-1,1]) {
+        const to = toIndex(row + dir,col + dc);
+        if (to < 0) continue;
+
+        const target = state.board[to];
+
+        if (
+          target &&
+          colorOf(target) !== color &&
+          target.toLowerCase() !== "k"
+        ) {
+          addMove(moves,state,from,to);
         }
 
-        return false;
-      };
-
-      if (type === "p") {
-        const dir = color === "w" ? -1 : 1;
-        const start = color === "w" ? 6 : 1;
-
-        if (inside(r+dir,c) && !state[r+dir][c]) {
-          moves.push([r+dir,c]);
-
-          if (r === start && !state[r+2*dir][c]) {
-            moves.push([r+2*dir,c]);
-          }
-        }
-
-        for (const dc of [-1,1]) {
-          const nr = r+dir;
-          const nc = c+dc;
+        if (to === state.ep && !target) {
+          const capturedIndex = to + (color === "w" ? 8 : -8);
+          const capturedPiece = state.board[capturedIndex];
 
           if (
-            inside(nr,nc) &&
-            state[nr][nc] &&
-            colorOf(state[nr][nc]) !== color &&
-            typeOf(state[nr][nc]) !== "k"
+            capturedPiece &&
+            capturedPiece.toLowerCase() === "p" &&
+            colorOf(capturedPiece) !== color
           ) {
-            moves.push([nr,nc]);
+            addMove(moves,state,from,to,{enPassant:true});
           }
         }
       }
 
-      if (type === "n") {
-        for (const [dr,dc] of [
-          [-2,-1],[-2,1],[-1,-2],[-1,2],
-          [1,-2],[1,2],[2,-1],[2,1]
-        ]) add(r+dr,c+dc);
-      }
-
-      if (type === "k") {
-        for (let dr=-1; dr<=1; dr++) {
-          for (let dc=-1; dc<=1; dc++) {
-            if (dr || dc) add(r+dr,c+dc);
-          }
-        }
-      }
-
-      if (["b","r","q"].includes(type)) {
-        const directions = [];
-
-        if (type === "b" || type === "q") {
-          directions.push(
-            [-1,-1],[-1,1],[1,-1],[1,1]
-          );
-        }
-
-        if (type === "r" || type === "q") {
-          directions.push(
-            [-1,0],[1,0],[0,-1],[0,1]
-          );
-        }
-
-        for (const [dr,dc] of directions) {
-          let nr = r+dr;
-          let nc = c+dc;
-
-          while (inside(nr,nc)) {
-            if (!add(nr,nc)) break;
-            nr += dr;
-            nc += dc;
-          }
-        }
-      }
-
-      return moves;
+      continue;
     }
 
-    function findKing(state,color) {
-      for (let r=0; r<8; r++) {
-        for (let c=0; c<8; c++) {
-          if (state[r][c] === color+"k") return [r,c];
-        }
+    if (type === "n") {
+      for (const [dr,dc] of KNIGHT_STEPS) {
+        const to = toIndex(row + dr,col + dc);
+        if (to >= 0) addMove(moves,state,from,to);
       }
-      return null;
+
+      continue;
     }
 
-    function isAttacked(state,r,c,byColor) {
-      for (let sr=0; sr<8; sr++) {
-        for (let sc=0; sc<8; sc++) {
-          const piece = state[sr][sc];
+    if (type === "k") {
+      for (const [dr,dc] of KING_STEPS) {
+        const to = toIndex(row + dr,col + dc);
+        if (to >= 0) addMove(moves,state,from,to);
+      }
 
-          if (!piece || colorOf(piece) !== byColor) continue;
+      const homeRow = color === "w" ? 7 : 0;
+      const enemy = opposite(color);
 
-          const type = typeOf(piece);
+      if (row === homeRow && col === 4 && !isInCheck(state,color)) {
+        const kingRight = color === "w" ? "K" : "k";
+        const queenRight = color === "w" ? "Q" : "q";
+        const rook = color === "w" ? "R" : "r";
 
-          if (type === "p") {
-            const dir = byColor === "w" ? -1 : 1;
+        const kingRook = homeRow * 8 + 7;
+        const queenRook = homeRow * 8;
 
-            for (const dc of [-1,1]) {
-              if (sr+dir === r && sc+dc === c) return true;
-            }
-          } else if (type === "k") {
-            if (Math.max(Math.abs(sr-r),Math.abs(sc-c)) === 1) {
-              return true;
-            }
-          } else {
-            if (pseudoMoves(state,sr,sc).some(
-              move => move[0] === r && move[1] === c
-            )) return true;
+        if (
+          state.castling.includes(kingRight) &&
+          state.board[kingRook] === rook &&
+          !state.board[homeRow * 8 + 5] &&
+          !state.board[homeRow * 8 + 6] &&
+          !isSquareAttacked(state,homeRow * 8 + 5,enemy) &&
+          !isSquareAttacked(state,homeRow * 8 + 6,enemy)
+        ) {
+          moves.push({from,to:homeRow * 8 + 6,castle:"K"});
+        }
+
+        if (
+          state.castling.includes(queenRight) &&
+          state.board[queenRook] === rook &&
+          !state.board[homeRow * 8 + 1] &&
+          !state.board[homeRow * 8 + 2] &&
+          !state.board[homeRow * 8 + 3] &&
+          !isSquareAttacked(state,homeRow * 8 + 3,enemy) &&
+          !isSquareAttacked(state,homeRow * 8 + 2,enemy)
+        ) {
+          moves.push({from,to:homeRow * 8 + 2,castle:"Q"});
+        }
+      }
+
+      continue;
+    }
+
+    let directions = [];
+
+    if (type === "b") directions = BISHOP_DIRS;
+    if (type === "r") directions = ROOK_DIRS;
+    if (type === "q") directions = QUEEN_DIRS;
+
+    for (const [dr,dc] of directions) {
+      let r = row + dr;
+      let c = col + dc;
+
+      while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+        const to = toIndex(r,c);
+
+        if (!state.board[to]) {
+          addMove(moves,state,from,to);
+        } else {
+          if (
+            colorOf(state.board[to]) !== color &&
+            state.board[to].toLowerCase() !== "k"
+          ) {
+            addMove(moves,state,from,to);
           }
+
+          break;
         }
+
+        r += dr;
+        c += dc;
       }
-
-      return false;
     }
+  }
 
-    function inCheck(state,color) {
-      const king = findKing(state,color);
-      if (!king) return true;
+  return moves;
+}
 
-      return isAttacked(
+
+/* =================================
+   이동 적용
+   검색 중에는 기보 기록을 복사하지 않음
+================================= */
+
+function applyMove(state, move, recordPosition = true) {
+  const board = state.board.slice();
+
+  const piece = board[move.from];
+  const targetPiece = board[move.to];
+
+  const color = colorOf(piece);
+  const type = piece.toLowerCase();
+
+  let capturedPiece = targetPiece;
+
+  board[move.from] = null;
+
+  if (move.enPassant) {
+    const capturedIndex =
+      move.to + (color === "w" ? 8 : -8);
+
+    capturedPiece = board[capturedIndex];
+    board[capturedIndex] = null;
+  }
+
+  let placedPiece = piece;
+
+  if (move.promotion) {
+    placedPiece = color === "w"
+      ? move.promotion.toUpperCase()
+      : move.promotion.toLowerCase();
+  }
+
+  board[move.to] = placedPiece;
+
+  if (move.castle) {
+    const row = color === "w" ? 7 : 0;
+
+    const rookFrom =
+      row * 8 + (move.castle === "K" ? 7 : 0);
+
+    const rookTo =
+      row * 8 + (move.castle === "K" ? 5 : 3);
+
+    board[rookTo] = board[rookFrom];
+    board[rookFrom] = null;
+  }
+
+  let castling = state.castling;
+
+  const removeRights = letters => {
+    for (const letter of letters) {
+      castling = castling.replace(letter,"");
+    }
+  };
+
+  if (piece === "K") removeRights("KQ");
+  if (piece === "k") removeRights("kq");
+
+  if (move.from === 63) removeRights("K");
+  if (move.from === 56) removeRights("Q");
+  if (move.from === 7) removeRights("k");
+  if (move.from === 0) removeRights("q");
+
+  if (move.to === 63 && capturedPiece) removeRights("K");
+  if (move.to === 56 && capturedPiece) removeRights("Q");
+  if (move.to === 7 && capturedPiece) removeRights("k");
+  if (move.to === 0 && capturedPiece) removeRights("q");
+
+  let ep = null;
+
+  if (type === "p" && Math.abs(move.to - move.from) === 16) {
+    ep = (move.from + move.to) / 2;
+  }
+
+  const halfmove =
+    type === "p" || capturedPiece
+      ? 0
+      : state.halfmove + 1;
+
+  const fullmove =
+    state.fullmove + (color === "b" ? 1 : 0);
+
+  const next = {
+    board,
+    turn:opposite(color),
+    castling,
+    ep,
+    halfmove,
+    fullmove,
+    lastMove:{from:move.from,to:move.to},
+
+    // 탐색용 상태는 기존 기록 배열을 공유한다.
+    // 실제 대국에서만 새 기록 배열을 만든다.
+    positionHistory:recordPosition
+      ? state.positionHistory.slice()
+      : state.positionHistory
+  };
+
+  if (recordPosition) {
+    next.positionHistory.push(positionKey(next));
+  }
+
+  return next;
+}
+
+
+/* =================================
+   반복 위치 및 앙파상
+================================= */
+
+function hasLegalEnPassant(state) {
+  if (state.ep === null) return false;
+
+  const color = state.turn;
+  const dir = color === "w" ? -1 : 1;
+
+  for (let from = 0; from < 64; from++) {
+    const piece = state.board[from];
+
+    if (
+      !piece ||
+      colorOf(piece) !== color ||
+      piece.toLowerCase() !== "p"
+    ) continue;
+
+    const row = rowOf(from);
+    const col = colOf(from);
+
+    for (const dc of [-1,1]) {
+      const to = toIndex(row + dir,col + dc);
+
+      if (to !== state.ep) continue;
+
+      const capturedIndex =
+        to + (color === "w" ? 8 : -8);
+
+      const captured = state.board[capturedIndex];
+
+      if (
+        !captured ||
+        captured.toLowerCase() !== "p" ||
+        colorOf(captured) === color
+      ) continue;
+
+      const next = applyMove(
         state,
-        king[0],
-        king[1],
-        color === "w" ? "b" : "w"
+        {from,to,enPassant:true},
+        false
+      );
+
+      if (!isInCheck(next,color)) return true;
+    }
+  }
+
+  return false;
+}
+
+function positionKey(state) {
+  const pieces = state.board.map(p => p || ".").join("");
+
+  const epSquare =
+    state.ep !== null && hasLegalEnPassant(state)
+      ? state.ep
+      : "-";
+
+  return [
+    pieces,
+    state.turn,
+    state.castling || "-",
+    epSquare
+  ].join("|");
+}
+
+function repetitionCount(state) {
+  const key = positionKey(state);
+  let count = 0;
+
+  for (const position of state.positionHistory) {
+    if (position === key) count++;
+  }
+
+  return count;
+}
+
+
+/* =================================
+   합법적인 이동
+================================= */
+
+function legalMoves(state) {
+  const color = state.turn;
+  const pseudoMoves = generatePseudoMoves(state);
+  const legal = [];
+
+  for (const move of pseudoMoves) {
+    const next = applyMove(state,move,false);
+
+    if (!isInCheck(next,color)) {
+      legal.push(move);
+    }
+  }
+
+  return legal;
+}
+
+
+/* =================================
+   무승부 판정
+================================= */
+
+function insufficientMaterial(state) {
+  const pieces = [];
+
+  for (let i = 0; i < 64; i++) {
+    const piece = state.board[i];
+
+    if (!piece || piece.toLowerCase() === "k") continue;
+
+    pieces.push({
+      type:piece.toLowerCase(),
+      colorSquare:(rowOf(i) + colOf(i)) % 2
+    });
+  }
+
+  if (pieces.length === 0) return true;
+
+  if (
+    pieces.length === 1 &&
+    ["b","n"].includes(pieces[0].type)
+  ) {
+    return true;
+  }
+
+  if (
+    pieces.every(p => p.type === "b") &&
+    new Set(pieces.map(p => p.colorSquare)).size === 1
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function getGameResult(state,moves = null) {
+  if (!moves) moves = legalMoves(state);
+
+  const check = isInCheck(state);
+
+  if (moves.length === 0) {
+    if (check) {
+      return {
+        done:true,
+        text:"체크메이트! " +
+          (state.turn === "w" ? "흑" : "백") +
+          " 승리!"
+      };
+    }
+
+    return {
+      done:true,
+      text:"스테일메이트! 무승부입니다."
+    };
+  }
+
+  if (insufficientMaterial(state)) {
+    return {done:true,text:"기물 부족으로 무승부입니다."};
+  }
+
+  if (repetitionCount(state) >= 5) {
+    return {done:true,text:"5회 반복으로 무승부입니다."};
+  }
+
+  if (state.halfmove >= 150) {
+    return {done:true,text:"75수 규칙으로 무승부입니다."};
+  }
+
+  return {
+    done:false,
+    text:
+      (state.turn === "w" ? "백" : "흑") +
+      " 차례" +
+      (check ? " · 체크!" : "")
+  };
+}
+
+
+/* =================================
+   기보 표기
+================================= */
+
+function moveNotation(state,move) {
+  const piece = state.board[move.from];
+  const type = piece.toLowerCase();
+
+  if (move.castle === "K") return "O-O";
+  if (move.castle === "Q") return "O-O-O";
+
+  const target = state.board[move.to];
+  const capture = !!target || !!move.enPassant;
+
+  let notation = "";
+
+  if (type === "p") {
+    if (capture) notation += FILES[colOf(move.from)];
+  } else {
+    notation += type.toUpperCase();
+
+    const alternatives = legalMoves(state).filter(other => {
+      if (other.from === move.from || other.to !== move.to) {
+        return false;
+      }
+
+      const otherPiece = state.board[other.from];
+
+      return otherPiece &&
+        otherPiece.toLowerCase() === type;
+    });
+
+    if (alternatives.length > 0) {
+      const sameFile = alternatives.some(
+        other => colOf(other.from) === colOf(move.from)
+      );
+
+      const sameRank = alternatives.some(
+        other => rowOf(other.from) === rowOf(move.from)
+      );
+
+      if (!sameFile) {
+        notation += FILES[colOf(move.from)];
+      } else if (!sameRank) {
+        notation += String(8 - rowOf(move.from));
+      } else {
+        notation += squareName(move.from);
+      }
+    }
+  }
+
+  if (capture) notation += "x";
+
+  notation += squareName(move.to);
+
+  if (move.promotion) {
+    notation += "=" + move.promotion;
+  }
+
+  const next = applyMove(state,move,false);
+
+  if (isInCheck(next,next.turn)) {
+    notation += legalMoves(next).length === 0 ? "#" : "+";
+  }
+
+  return notation;
+}
+
+
+/* =================================
+   AI 평가 함수
+   기물 가치 + 위치 + 폰 구조 + 킹 안전
+================================= */
+
+function evaluateBoard(state) {
+  let score = 0;
+  const board = state.board;
+
+  const pawnFiles = {
+    w:Array(8).fill(0),
+    b:Array(8).fill(0)
+  };
+
+  // 폰 위치를 먼저 집계한다.
+  for (let i = 0; i < 64; i++) {
+    const piece = board[i];
+
+    if (piece && piece.toLowerCase() === "p") {
+      pawnFiles[colorOf(piece)][colOf(i)]++;
+    }
+  }
+
+  for (let i = 0; i < 64; i++) {
+    const piece = board[i];
+    if (!piece) continue;
+
+    const color = colorOf(piece);
+    const type = piece.toLowerCase();
+
+    const row = rowOf(i);
+    const col = colOf(i);
+
+    const relativeRow =
+      color === "w" ? 7 - row : row;
+
+    const centerDistance =
+      Math.abs(3.5 - row) +
+      Math.abs(3.5 - col);
+
+    let value = PIECE_VALUES[type] || 0;
+
+    const centerBonus =
+      Math.max(0,4 - centerDistance) * 7;
+
+    if (type === "p") {
+      // 전진한 폰과 중앙 폰을 높게 평가
+      value += relativeRow * 11;
+
+      if (col >= 2 && col <= 5) {
+        value += 13;
+      }
+
+      if (relativeRow >= 5) {
+        value += (relativeRow - 4) * 9;
+      }
+
+      // 이중 폰 페널티
+      if (pawnFiles[color][col] > 1) {
+        value -= 13 * (pawnFiles[color][col] - 1);
+      }
+
+      // 고립 폰 페널티
+      const leftFile = col > 0 ? pawnFiles[color][col - 1] : 0;
+      const rightFile = col < 7 ? pawnFiles[color][col + 1] : 0;
+
+      if (leftFile === 0 && rightFile === 0) {
+        value -= 12;
+      }
+
+      // 상대 폰이 앞쪽 인접 열에 없는 통과 폰 보상
+      let passed = true;
+      const enemy = opposite(color);
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = Math.max(0,col - 1); c <= Math.min(7,col + 1); c++) {
+          const enemyPawn = board[toIndex(r,c)];
+
+          if (
+            enemyPawn &&
+            enemyPawn.toLowerCase() === "p" &&
+            colorOf(enemyPawn) === enemy
+          ) {
+            const enemyRelative =
+              enemy === "w" ? 7 - r : r;
+
+            if (enemyRelative > relativeRow) {
+              passed = false;
+            }
+          }
+        }
+      }
+
+      if (passed) {
+        value += relativeRow * relativeRow * 3;
+      }
+    }
+
+    if (type === "n") {
+      value += centerBonus * 2;
+
+      // 가장자리 나이트는 활동성이 낮다.
+      if (row === 0 || row === 7 || col === 0 || col === 7) {
+        value -= 15;
+      }
+    }
+
+    if (type === "b") {
+      value += centerBonus;
+
+      let mobility = 0;
+
+      for (const [dr,dc] of BISHOP_DIRS) {
+        let r = row + dr;
+        let c = col + dc;
+
+        while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+          mobility++;
+
+          if (board[toIndex(r,c)]) break;
+
+          r += dr;
+          c += dc;
+        }
+      }
+
+      value += mobility * 2;
+
+      // 비숍 쌍 보너스
+      let bishopCount = 0;
+
+      for (const p of board) {
+        if (
+          p &&
+          p.toLowerCase() === "b" &&
+          colorOf(p) === color
+        ) {
+          bishopCount++;
+        }
+      }
+
+      if (bishopCount >= 2) value += 25;
+    }
+
+    if (type === "r") {
+      let ownPawns = 0;
+      let enemyPawns = 0;
+
+      for (let r = 0; r < 8; r++) {
+        const p = board[toIndex(r,col)];
+
+        if (!p || p.toLowerCase() !== "p") continue;
+
+        if (colorOf(p) === color) ownPawns++;
+        else enemyPawns++;
+      }
+
+      if (ownPawns === 0 && enemyPawns === 0) {
+        value += 35;
+      } else if (ownPawns === 0) {
+        value += 20;
+      }
+
+      // 7번째 줄에 진출한 룩
+      if (relativeRow === 6) value += 18;
+    }
+
+    if (type === "q") {
+      value += centerBonus * 0.5;
+    }
+
+    if (type === "k") {
+      const homeRow = color === "w" ? 7 : 0;
+      const kingSideRight = color === "w" ? "K" : "k";
+      const queenSideRight = color === "w" ? "Q" : "q";
+
+      // 캐슬링한 킹은 안전한 위치로 평가
+      if (row === homeRow && (col === 2 || col === 6)) {
+        value += 38;
+      }
+
+      // 중앙에 남은 킹은 초반에 불리하게 평가
+      if (
+        row === homeRow &&
+        col === 4 &&
+        (
+          state.castling.includes(kingSideRight) ||
+          state.castling.includes(queenSideRight)
+        )
+      ) {
+        value -= 15;
+      }
+
+      // 킹 주변의 아군 폰 방패
+      const shieldRow = color === "w" ? row - 1 : row + 1;
+
+      for (let dc = -1; dc <= 1; dc++) {
+        const shieldCol = col + dc;
+
+        if (
+          shieldRow >= 0 && shieldRow < 8 &&
+          shieldCol >= 0 && shieldCol < 8
+        ) {
+          const shieldPiece = board[toIndex(shieldRow,shieldCol)];
+
+          if (
+            shieldPiece &&
+            shieldPiece.toLowerCase() === "p" &&
+            colorOf(shieldPiece) === color
+          ) {
+            value += 8;
+          }
+        }
+      }
+    }
+
+    score += color === "b" ? value : -value;
+  }
+
+  return score;
+}
+
+
+/* =================================
+   AI 탐색용 상태 및 캐시
+================================= */
+
+function createSearchContext(config) {
+  return {
+    nodes:0,
+    maxNodes:config.maxNodes,
+    deadline:performance.now() + config.timeLimit,
+    table:new Map(),
+    killers:Array.from({length:80},() => [null,null]),
+    history:new Int32Array(4096),
+    aborted:false
+  };
+}
+
+function searchKey(state) {
+  // 탐색용 키는 합법 앙파상 여부를 다시 계산하지 않는다.
+  return (
+    state.board.map(p => p || ".").join("") +
+    "|" + state.turn +
+    "|" + (state.castling || "-") +
+    "|" + (state.ep === null ? "-" : state.ep) +
+    "|" + state.halfmove
+  );
+}
+
+function sameMove(a,b) {
+  if (!a || !b) return false;
+
+  return (
+    a.from === b.from &&
+    a.to === b.to &&
+    a.promotion === b.promotion &&
+    a.castle === b.castle &&
+    !!a.enPassant === !!b.enPassant
+  );
+}
+
+function copyMove(move) {
+  if (!move) return null;
+  return {...move};
+}
+
+function searchStopped(ctx) {
+  ctx.nodes++;
+
+  if (
+    ctx.nodes >= ctx.maxNodes ||
+    performance.now() >= ctx.deadline
+  ) {
+    ctx.aborted = true;
+    return true;
+  }
+
+  return false;
+}
+
+
+/* =================================
+   이동 우선순위
+   TT 수 -> 잡기 -> 프로모션 -> 킬러 수 -> 히스토리
+================================= */
+
+function moveOrderScore(state,move,ctx = null,ply = 0,ttMove = null) {
+  if (ttMove && sameMove(move,ttMove)) {
+    return 2000000;
+  }
+
+  const attacker = state.board[move.from];
+
+  let victim = state.board[move.to];
+
+  if (move.enPassant) {
+    victim = state.turn === "w" ? "p" : "P";
+  }
+
+  let score = 0;
+
+  if (victim) {
+    const victimValue = PIECE_VALUES[victim.toLowerCase()] || 0;
+    const attackerValue = PIECE_VALUES[attacker.toLowerCase()] || 0;
+
+    // 값이 낮은 기물로 높은 기물을 잡는 수를 우선
+    score += 100000 + victimValue * 10 - attackerValue;
+  }
+
+  if (move.promotion) {
+    score += 90000 + (PIECE_VALUES[move.promotion.toLowerCase()] || 0);
+  }
+
+  if (move.castle) score += 500;
+
+  if (ctx && !victim && !move.promotion) {
+    const killers = ctx.killers[Math.min(ply,79)];
+
+    if (sameMove(move,killers[0])) {
+      score += 80000;
+    } else if (sameMove(move,killers[1])) {
+      score += 70000;
+    }
+
+    score += ctx.history[move.from * 64 + move.to];
+  }
+
+  return score;
+}
+
+function orderedMoves(state,moves,ctx = null,ply = 0,ttMove = null) {
+  const scored = moves.map(move => ({
+    move,
+    score:moveOrderScore(state,move,ctx,ply,ttMove)
+  }));
+
+  scored.sort((a,b) => b.score - a.score);
+
+  return scored.map(item => item.move);
+}
+
+function rememberQuietCutoff(ctx,move,depth,ply) {
+  if (!ctx || !move) return;
+
+  const killers = ctx.killers[Math.min(ply,79)];
+
+  if (!sameMove(move,killers[0])) {
+    killers[1] = killers[0];
+    killers[0] = copyMove(move);
+  }
+
+  const index = move.from * 64 + move.to;
+
+  ctx.history[index] += depth * depth;
+
+  if (ctx.history[index] > 100000) {
+    for (let i = 0; i < ctx.history.length; i++) {
+      ctx.history[i] = Math.floor(ctx.history[i] / 2);
+    }
+  }
+}
+
+
+/* =================================
+   퀴에선스 탐색
+   잡기와 체크 회피를 추가 탐색
+================================= */
+
+function quiescence(state,alpha,beta,remaining,ply,ctx) {
+  if (searchStopped(ctx)) {
+    return evaluateBoard(state);
+  }
+
+  const check = isInCheck(state);
+  const maximizing = state.turn === "b";
+
+  if (check) {
+    const evasions = legalMoves(state);
+
+    if (evasions.length === 0) {
+      return maximizing
+        ? -MATE_SCORE + ply
+        : MATE_SCORE - ply;
+    }
+
+    if (remaining <= 0) {
+      return evaluateBoard(state);
+    }
+
+    const moves = orderedMoves(state,evasions,ctx,ply);
+    let best = maximizing ? -Infinity : Infinity;
+
+    for (const move of moves) {
+      const next = applyMove(state,move,false);
+
+      const score = quiescence(
+        next,alpha,beta,remaining - 1,ply + 1,ctx
+      );
+
+      if (ctx.aborted) return best === -Infinity || best === Infinity
+        ? evaluateBoard(state)
+        : best;
+
+      if (maximizing) {
+        best = Math.max(best,score);
+        alpha = Math.max(alpha,best);
+      } else {
+        best = Math.min(best,score);
+        beta = Math.min(beta,best);
+      }
+
+      if (beta <= alpha) break;
+    }
+
+    return best;
+  }
+
+  const standPat = evaluateBoard(state);
+
+  if (maximizing) {
+    if (standPat >= beta) return beta;
+    alpha = Math.max(alpha,standPat);
+  } else {
+    if (standPat <= alpha) return alpha;
+    beta = Math.min(beta,standPat);
+  }
+
+  if (remaining <= 0) return standPat;
+
+  // 체크가 아닐 때는 잡기와 프로모션만 탐색한다.
+  const pseudoMoves = generatePseudoMoves(state);
+  const captures = [];
+
+  for (const move of pseudoMoves) {
+    if (
+      !state.board[move.to] &&
+      !move.enPassant &&
+      !move.promotion
+    ) {
+      continue;
+    }
+
+    const next = applyMove(state,move,false);
+
+    if (!isInCheck(next,state.turn)) {
+      captures.push(move);
+    }
+  }
+
+  const moves = orderedMoves(state,captures,ctx,ply);
+  let best = standPat;
+
+  for (const move of moves) {
+    const next = applyMove(state,move,false);
+
+    const score = quiescence(
+      next,alpha,beta,remaining - 1,ply + 1,ctx
+    );
+
+    if (ctx.aborted) return best;
+
+    if (maximizing) {
+      best = Math.max(best,score);
+      alpha = Math.max(alpha,best);
+    } else {
+      best = Math.min(best,score);
+      beta = Math.min(beta,best);
+    }
+
+    if (beta <= alpha) break;
+  }
+
+  return best;
+}
+
+
+/* =================================
+   미니맥스 + 알파베타 + TT 캐시
+================================= */
+
+function minimax(state,depth,alpha,beta,ply,ctx) {
+  if (searchStopped(ctx)) {
+    return {score:evaluateBoard(state),move:null};
+  }
+
+  if (depth <= 0) {
+    return {
+      score:quiescence(state,alpha,beta,4,ply,ctx),
+      move:null
+    };
+  }
+
+  const key = searchKey(state);
+  const alphaOriginal = alpha;
+  const betaOriginal = beta;
+
+  const cached = ctx.table.get(key);
+  let ttMove = cached ? cached.move : null;
+
+  if (cached && cached.depth >= depth) {
+    if (cached.bound === "exact") {
+      return {score:cached.score,move:cached.move};
+    }
+
+    if (cached.bound === "lower") {
+      alpha = Math.max(alpha,cached.score);
+    } else if (cached.bound === "upper") {
+      beta = Math.min(beta,cached.score);
+    }
+
+    if (alpha >= beta) {
+      return {score:cached.score,move:cached.move};
+    }
+  }
+
+  const moves = legalMoves(state);
+
+  if (moves.length === 0) {
+    if (isInCheck(state)) {
+      return {
+        score:state.turn === "b"
+          ? -MATE_SCORE + ply
+          : MATE_SCORE - ply,
+        move:null
+      };
+    }
+
+    return {score:0,move:null};
+  }
+
+  if (state.halfmove >= 150) {
+    return {score:0,move:null};
+  }
+
+  const maximizing = state.turn === "b";
+
+  let bestScore = maximizing ? -Infinity : Infinity;
+  let bestMove = null;
+
+  const sorted = orderedMoves(
+    state,moves,ctx,ply,ttMove
+  );
+
+  for (const move of sorted) {
+    const next = applyMove(state,move,false);
+
+    const result = minimax(
+      next,
+      depth - 1,
+      alpha,
+      beta,
+      ply + 1,
+      ctx
+    );
+
+    if (ctx.aborted) {
+      return {
+        score:bestMove ? bestScore : evaluateBoard(state),
+        move:bestMove
+      };
+    }
+
+    const score = result.score;
+
+    if (maximizing) {
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+
+      alpha = Math.max(alpha,bestScore);
+    } else {
+      if (score < bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+
+      beta = Math.min(beta,bestScore);
+    }
+
+    if (beta <= alpha) {
+      if (
+        !state.board[move.to] &&
+        !move.enPassant &&
+        !move.promotion
+      ) {
+        rememberQuietCutoff(ctx,move,depth,ply);
+      }
+
+      break;
+    }
+  }
+
+  if (!ctx.aborted) {
+    let bound = "exact";
+
+    if (bestScore <= alphaOriginal) {
+      bound = "upper";
+    } else if (bestScore >= betaOriginal) {
+      bound = "lower";
+    }
+
+    // 메모리 사용량 제한
+    if (ctx.table.size > 70000) {
+      ctx.table.clear();
+    }
+
+    ctx.table.set(key,{
+      depth,
+      score:bestScore,
+      bound,
+      move:copyMove(bestMove)
+    });
+  }
+
+  return {
+    score:bestScore,
+    move:bestMove
+  };
+}
+
+
+/* =================================
+   루트 탐색
+================================= */
+
+function searchRoot(state,depth,ctx,previousBest) {
+  const moves = legalMoves(state);
+
+  if (!moves.length) {
+    return {complete:true,move:null,score:0};
+  }
+
+  const sorted = orderedMoves(
+    state,
+    moves,
+    ctx,
+    0,
+    previousBest
+  );
+
+  let alpha = -Infinity;
+  const beta = Infinity;
+
+  let bestMove = null;
+  let bestScore = -Infinity;
+
+  for (const move of sorted) {
+    if (ctx.aborted) {
+      return {complete:false,move:bestMove,score:bestScore};
+    }
+
+    const next = applyMove(state,move,false);
+
+    const result = minimax(
+      next,
+      depth - 1,
+      alpha,
+      beta,
+      1,
+      ctx
+    );
+
+    if (ctx.aborted) {
+      return {complete:false,move:bestMove,score:bestScore};
+    }
+
+    if (result.score > bestScore) {
+      bestScore = result.score;
+      bestMove = move;
+    }
+
+    alpha = Math.max(alpha,bestScore);
+  }
+
+  return {
+    complete:true,
+    move:bestMove,
+    score:bestScore
+  };
+}
+
+
+/* =================================
+   AI 난이도 설정
+================================= */
+
+function getAIConfig() {
+  if (difficulty === "easy") {
+    return {
+      maxDepth:2,
+      maxNodes:7000,
+      timeLimit:350
+    };
+  }
+
+  if (difficulty === "hard") {
+    return {
+      maxDepth:6,
+      maxNodes:85000,
+      timeLimit:1500
+    };
+  }
+
+  return {
+    maxDepth:4,
+    maxNodes:30000,
+    timeLimit:800
+  };
+}
+
+
+/* =================================
+   AI 수 선택
+   반복 심화 탐색으로 이전 결과를 보존
+================================= */
+
+async function chooseAIMove(state) {
+  const legal = legalMoves(state);
+
+  if (!legal.length) return null;
+
+  const config = getAIConfig();
+  const ctx = createSearchContext(config);
+
+  // 계산이 중단되더라도 둘 수 있는 기본 수를 확보한다.
+  let bestMove = orderedMoves(state,legal)[0];
+
+  // 1수부터 차례로 깊이를 늘린다.
+  for (let depth = 1; depth <= config.maxDepth; depth++) {
+    if (
+      ctx.nodes >= ctx.maxNodes ||
+      performance.now() >= ctx.deadline
+    ) {
+      break;
+    }
+
+    ctx.aborted = false;
+
+    const result = searchRoot(
+      state,
+      depth,
+      ctx,
+      bestMove
+    );
+
+    if (!result.complete || ctx.aborted) {
+      break;
+    }
+
+    if (result.move) {
+      bestMove = result.move;
+    }
+
+    // 다음 탐색 단계 전에 화면에 제어권을 돌려준다.
+    await new Promise(resolve => setTimeout(resolve,0));
+  }
+
+  return bestMove;
+}
+
+
+/* =================================
+   체스판 생성
+================================= */
+
+function createBoard() {
+  boardElement.innerHTML = "";
+  squareButtons = [];
+
+  for (let i = 0; i < 64; i++) {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "square";
+
+    button.innerHTML = `
+      <span class="coordinate rank-label"></span>
+      <span class="coordinate file-label"></span>
+      <span class="piece"></span>
+    `;
+
+    button.addEventListener("click",() => {
+      handleSquareClick(i);
+    });
+
+    boardElement.appendChild(button);
+    squareButtons.push(button);
+  }
+}
+
+
+/* =================================
+   화면 렌더링
+================================= */
+
+function renderBoard(moves = null,result = null) {
+  if (!moves) moves = legalMoves(game);
+  if (!result) result = getGameResult(game,moves);
+
+  const targets = new Map();
+
+  if (selectedSquare !== null) {
+    for (const move of moves) {
+      if (move.from !== selectedSquare) continue;
+
+      targets.set(
+        move.to,
+        !!game.board[move.to] || !!move.enPassant
+      );
+    }
+  }
+
+  const whiteKing = findKing(game,"w");
+  const blackKing = findKing(game,"b");
+
+  const checkedKing =
+    isInCheck(game)
+      ? game.turn === "w" ? whiteKing : blackKing
+      : -1;
+
+  for (let i = 0; i < 64; i++) {
+    const button = squareButtons[i];
+
+    const row = rowOf(i);
+    const col = colOf(i);
+    const piece = game.board[i];
+
+    button.className =
+      "square " +
+      ((row + col) % 2 === 0 ? "light" : "dark");
+
+    if (selectedSquare === i) {
+      button.classList.add("selected");
+    }
+
+    if (
+      game.lastMove &&
+      (
+        game.lastMove.from === i ||
+        game.lastMove.to === i
+      )
+    ) {
+      button.classList.add("last-move");
+    }
+
+    if (targets.has(i)) {
+      button.classList.add(
+        targets.get(i) ? "capture-target" : "legal-target"
       );
     }
 
-    function makeMove(state,from,to) {
-      const next = copyBoard(state);
-      const [r,c] = from;
-      const [nr,nc] = to;
-
-      let piece = next[r][c];
-      next[r][c] = null;
-
-      if (piece[1] === "p" && (nr === 0 || nr === 7)) {
-        piece = piece[0] + "q";
-      }
-
-      next[nr][nc] = piece;
-      return next;
+    if (checkedKing === i) {
+      button.classList.add("check-square");
     }
 
-    function allLegalMoves(state,color) {
-      const result = [];
+    const pieceElement = button.querySelector(".piece");
 
-      for (let r=0; r<8; r++) {
-        for (let c=0; c<8; c++) {
-          const piece = state[r][c];
+    pieceElement.textContent = piece ? SYMBOLS[piece] : "";
 
-          if (!piece || colorOf(piece) !== color) continue;
+    pieceElement.className =
+      "piece " +
+      (
+        piece
+          ? colorOf(piece) === "w"
+            ? "white-piece"
+            : "black-piece"
+          : ""
+      );
 
-          for (const move of pseudoMoves(state,r,c)) {
-            const next = makeMove(state,[r,c],move);
+    button.querySelector(".rank-label").textContent =
+      col === 0 ? String(8 - row) : "";
 
-            if (!inCheck(next,color)) {
-              result.push({
-                from:[r,c],
-                to:move
-              });
-            }
-          }
-        }
-      }
+    button.querySelector(".file-label").textContent =
+      row === 7 ? FILES[col] : "";
 
-      return result;
+    button.disabled =
+      aiThinking ||
+      !!pendingPromotion ||
+      result.done ||
+      (mode === "ai" && game.turn === "b");
+  }
+}
+
+function renderHistory() {
+  if (!moveLog.length) {
+    moveHistoryElement.textContent = "아직 이동 기록이 없습니다.";
+    return;
+  }
+
+  moveHistoryElement.innerHTML = "";
+
+  const rows = new Map();
+
+  for (const entry of moveLog) {
+    if (!rows.has(entry.fullmove)) {
+      rows.set(entry.fullmove,{w:"",b:""});
     }
 
-    function legalForPiece(r,c) {
-      return pseudoMoves(board,r,c).filter(move => {
-        const next = makeMove(board,[r,c],move);
-        return !inCheck(next,turn);
-      });
+    rows.get(entry.fullmove)[entry.color] = entry.notation;
+  }
+
+  for (const [number,moves] of rows) {
+    const row = document.createElement("div");
+    row.className = "move-row";
+
+    const n = document.createElement("span");
+    n.className = "move-number";
+    n.textContent = number + ".";
+
+    const white = document.createElement("span");
+    white.className = "move-white";
+    white.textContent = moves.w;
+
+    const black = document.createElement("span");
+    black.className = "move-black";
+    black.textContent = moves.b;
+
+    row.append(n,white,black);
+    moveHistoryElement.appendChild(row);
+  }
+
+  moveHistoryElement.scrollTop = moveHistoryElement.scrollHeight;
+}
+
+function renderCaptured() {
+  const whiteCaptured = [];
+  const blackCaptured = [];
+
+  for (const entry of moveLog) {
+    if (!entry.captured) continue;
+
+    if (entry.color === "w") {
+      whiteCaptured.push(entry.captured);
+    } else {
+      blackCaptured.push(entry.captured);
     }
+  }
 
-    function evaluate(state) {
-      const values = {
-        p:100, n:320, b:330, r:500, q:900, k:20000
-      };
+  document.getElementById("whiteCaptured").textContent =
+    whiteCaptured.map(piece => SYMBOLS[piece]).join(" ");
 
-      let score = 0;
+  document.getElementById("blackCaptured").textContent =
+    blackCaptured.map(piece => SYMBOLS[piece]).join(" ");
+}
 
-      for (const row of state) {
-        for (const piece of row) {
-          if (!piece) continue;
+function renderStatus(moves = null,result = null) {
+  if (!moves) moves = legalMoves(game);
+  if (!result) result = getGameResult(game,moves);
 
-          const value = values[typeOf(piece)];
-          score += colorOf(piece) === "b" ? value : -value;
-        }
-      }
+  statusElement.textContent = result.text;
 
-      return score;
+  if (result.done) {
+    subStatusElement.textContent = "게임이 종료되었습니다.";
+  } else if (aiThinking) {
+    subStatusElement.textContent = "AI가 생각하고 있습니다...";
+  } else if (mode === "ai") {
+    subStatusElement.textContent =
+      game.turn === "w"
+        ? "백 플레이어의 차례"
+        : "흑 인공지능의 차례";
+  } else {
+    subStatusElement.textContent =
+      game.turn === "w"
+        ? "백 플레이어의 차례"
+        : "흑 플레이어의 차례";
+  }
+
+  if (mode === "ai") {
+    gameInfoElement.innerHTML =
+      "백: 플레이어<br>" +
+      "흑: 인공지능<br>" +
+      "난이도: " +
+      difficultySelect.options[
+        difficultySelect.selectedIndex
+      ].text;
+  } else {
+    gameInfoElement.innerHTML =
+      "백: 플레이어 1<br>" +
+      "흑: 플레이어 2<br>" +
+      "같은 기기에서 번갈아 플레이합니다.";
+  }
+
+  return result;
+}
+
+function render() {
+  // 한 번 계산한 합법 수와 결과를 화면 전체에서 재사용
+  const moves = legalMoves(game);
+  const result = getGameResult(game,moves);
+
+  renderStatus(moves,result);
+  renderBoard(moves,result);
+  renderHistory();
+  renderCaptured();
+}
+
+
+/* =================================
+   이동 처리
+================================= */
+
+function commitMove(move) {
+  if (!move || !game) return;
+
+  const before = game;
+  const piece = before.board[move.from];
+
+  let captured = before.board[move.to];
+
+  if (move.enPassant) {
+    const capturedIndex =
+      move.to + (before.turn === "w" ? 8 : -8);
+
+    captured = before.board[capturedIndex];
+  }
+
+  const notation = moveNotation(before,move);
+
+  const entry = {
+    fullmove:before.fullmove,
+    color:before.turn,
+    notation,
+    captured
+  };
+
+  game = applyMove(before,move,true);
+
+  moveLog.push(entry);
+
+  selectedSquare = null;
+  pendingPromotion = null;
+  aiThinking = false;
+
+  promotionModal.classList.remove("show");
+
+  render();
+
+  if (mode === "ai" && game.turn === "b") {
+    if (!getGameResult(game).done) {
+      startAI();
     }
+  }
+}
 
-    function minimax(state,depth,alpha,beta,maximizing) {
-      const color = maximizing ? "b" : "w";
-      const moves = allLegalMoves(state,color);
 
-      if (moves.length === 0) {
-        if (inCheck(state,color)) {
-          return maximizing ? -100000-depth : 100000+depth;
-        }
-        return 0;
-      }
+/* =================================
+   사용자 이동
+================================= */
 
-      if (depth === 0) return evaluate(state);
+function handleSquareClick(index) {
+  if (!game) return;
+  if (aiThinking || pendingPromotion) return;
 
-      if (maximizing) {
-        let bestScore = -Infinity;
+  if (mode === "ai" && game.turn === "b") return;
 
-        for (const move of moves) {
-          const next = makeMove(state,move.from,move.to);
-          const value = minimax(next,depth-1,alpha,beta,false);
+  const moves = legalMoves(game);
+  const clickedPiece = game.board[index];
 
-          bestScore = Math.max(bestScore,value);
-          alpha = Math.max(alpha,value);
+  if (selectedSquare !== null) {
+    const choices = moves.filter(move =>
+      move.from === selectedSquare &&
+      move.to === index
+    );
 
-          if (beta <= alpha) break;
-        }
-
-        return bestScore;
-      } else {
-        let bestScore = Infinity;
-
-        for (const move of moves) {
-          const next = makeMove(state,move.from,move.to);
-          const value = minimax(next,depth-1,alpha,beta,true);
-
-          bestScore = Math.min(bestScore,value);
-          beta = Math.min(beta,value);
-
-          if (beta <= alpha) break;
-        }
-
-        return bestScore;
-      }
-    }
-
-    function computerMove() {
-      if (gameOver) return;
-
-      aiThinking = true;
-      statusElement.textContent = "컴퓨터가 생각 중...";
-
-      setTimeout(() => {
-        const moves = allLegalMoves(board,"b");
-
-        if (moves.length === 0) {
-          finishGame("b");
-          return;
-        }
-
-        let bestScore = -Infinity;
-        let choices = [];
-
-        for (const move of moves) {
-          const next = makeMove(board,move.from,move.to);
-          const score = minimax(next,1,-Infinity,Infinity,false);
-
-          if (score > bestScore) {
-            bestScore = score;
-            choices = [move];
-          } else if (score === bestScore) {
-            choices.push(move);
-          }
-        }
-
-        const chosen = choices[
-          Math.floor(Math.random()*choices.length)
-        ];
-
-        board = makeMove(board,chosen.from,chosen.to);
-        aiThinking = false;
-
-        turn = "w";
-        checkGameState();
-        render();
-      }, 250);
-    }
-
-    function checkGameState() {
-      const moves = allLegalMoves(board,turn);
-
-      if (moves.length === 0) {
-        finishGame(turn);
+    if (choices.length > 0) {
+      if (
+        choices.length > 1 &&
+        choices.some(move => move.promotion)
+      ) {
+        showPromotionChooser(choices);
         return;
       }
 
-      if (inCheck(board,turn)) {
-        statusElement.textContent =
-          turn === "w" ? "체크! 흰색 차례" : "체크! 검은색 차례";
-      } else {
-        statusElement.textContent =
-          turn === "w" ? "흰색 차례" : "검은색 차례";
-      }
+      commitMove(choices[0]);
+      return;
     }
+  }
 
-    function finishGame(color) {
-      gameOver = true;
-      aiThinking = false;
+  if (
+    clickedPiece &&
+    colorOf(clickedPiece) === game.turn
+  ) {
+    selectedSquare =
+      selectedSquare === index ? null : index;
 
-      if (inCheck(board,color)) {
-        statusElement.textContent =
-          color === "w" ? "체크메이트! 컴퓨터 승리" : "체크메이트! 플레이어 승리";
-      } else {
-        statusElement.textContent = "스테일메이트! 무승부";
-      }
+    render();
+    return;
+  }
 
-      render();
-    }
+  selectedSquare = null;
+  render();
+}
 
-    function handleClick(r,c) {
-      if (gameOver || turn !== "w" || aiThinking) return;
 
-      const piece = board[r][c];
+/* =================================
+   프로모션 선택
+================================= */
 
-      if (selected) {
-        const move = legalMoves.find(
-          item => item[0] === r && item[1] === c
-        );
+function showPromotionChooser(choices) {
+  pendingPromotion = choices;
+  promotionOptions.innerHTML = "";
 
-        if (move) {
-          board = makeMove(board,selected,move);
-          selected = null;
-          legalMoves = [];
+  const color = game.turn;
 
-          turn = "b";
-          checkGameState();
-          render();
+  for (const choice of choices) {
+    const promotion =
+      color === "w"
+        ? choice.promotion.toUpperCase()
+        : choice.promotion.toLowerCase();
 
-          if (!gameOver) computerMove();
-          return;
-        }
-      }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "promotion-choice";
 
-      if (piece && colorOf(piece) === "w") {
-        selected = [r,c];
-        legalMoves = legalForPiece(r,c);
-      } else {
-        selected = null;
-        legalMoves = [];
-      }
+    const piece = document.createElement("span");
+    piece.className = "promotion-piece";
+    piece.textContent = SYMBOLS[promotion];
 
-      render();
-    }
+    const name = document.createElement("span");
+    name.className = "promotion-name";
+    name.textContent = PIECE_NAMES[choice.promotion];
 
-    function render() {
-      boardElement.innerHTML = "";
+    button.append(piece,name);
 
-      for (let r=0; r<8; r++) {
-        for (let c=0; c<8; c++) {
-          const square = document.createElement("button");
-          square.className =
-            "square " + ((r+c)%2 === 0 ? "light" : "dark");
+    button.addEventListener("click",() => {
+      const selectedMove = pendingPromotion.find(
+        move => move.promotion === choice.promotion
+      );
 
-          if (
-            selected &&
-            selected[0] === r &&
-            selected[1] === c
-          ) {
-            square.classList.add("selected");
-          }
+      if (selectedMove) commitMove(selectedMove);
+    });
 
-          if (legalMoves.some(
-            move => move[0] === r && move[1] === c
-          )) {
-            square.classList.add("possible");
-          }
+    promotionOptions.appendChild(button);
+  }
 
-          square.textContent = symbols[board[r][c]] || "";
-          square.setAttribute("aria-label",`행 ${r+1}, 열 ${c+1}`);
+  promotionModal.classList.add("show");
+  renderBoard();
+}
 
-          square.addEventListener("click",() => handleClick(r,c));
-          boardElement.appendChild(square);
-        }
-      }
-    }
 
-    restartButton.addEventListener("click",resetGame);
+/* =================================
+   AI 대국 진행
+================================= */
 
-    resetGame();
-  </script>
+async function startAI() {
+  if (mode !== "ai") return;
+  if (game.turn !== "b") return;
+  if (aiThinking) return;
+
+  if (getGameResult(game).done) return;
+
+  const version = gameVersion;
+
+  aiThinking = true;
+  render();
+
+  // 화면이 먼저 갱신된 뒤 AI 계산을 시작한다.
+  await new Promise(resolve => setTimeout(resolve,60));
+
+  if (version !== gameVersion) return;
+  if (mode !== "ai" || game.turn !== "b") return;
+
+  let move = null;
+
+  try {
+    move = await chooseAIMove(game);
+  } catch (error) {
+    console.error("AI 계산 오류:",error);
+  }
+
+  // 계산 도중 새 게임을 시작했다면 이전 결과를 적용하지 않는다.
+  if (version !== gameVersion) return;
+
+  aiThinking = false;
+
+  if (move) {
+    commitMove(move);
+  } else {
+    render();
+  }
+}
+
+
+/* =================================
+   새 게임
+================================= */
+
+function newGame() {
+  gameVersion++;
+
+  mode = modeSelect.value;
+  difficulty = difficultySelect.value;
+
+  game = initialGame();
+
+  selectedSquare = null;
+  pendingPromotion = null;
+  aiThinking = false;
+
+  moveLog = [];
+
+  promotionModal.classList.remove("show");
+
+  difficultyGroup.style.display =
+    mode === "ai" ? "flex" : "none";
+
+  render();
+
+  if (mode === "ai" && game.turn === "b") {
+    startAI();
+  }
+}
+
+
+/* =================================
+   이벤트 연결
+================================= */
+
+document
+  .getElementById("newGameButton")
+  .addEventListener("click",newGame);
+
+modeSelect.addEventListener("change",newGame);
+
+difficultySelect.addEventListener("change",() => {
+  difficulty = difficultySelect.value;
+});
+
+
+/* =================================
+   게임 시작
+================================= */
+
+createBoard();
+newGame();
+
+</script>
 </body>
 </html>
