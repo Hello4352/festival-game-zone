@@ -25,6 +25,7 @@
     "games/neon-shooter.html",
     "games/chess.html",
     "games/minesweeper.html"
+    "games/apple.html"
   ];
 
   // 설명 팝업 열기
