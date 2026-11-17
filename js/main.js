@@ -70,7 +70,7 @@
   });
 
   // 미니게임 버튼 8개 생성
-  SITE_CONFIG.miniGames.slice(0, 8).forEach((name, index) => {
+  SITE_CONFIG.miniGames.slice(0, 9).forEach((name, index) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "mini-game-button";
