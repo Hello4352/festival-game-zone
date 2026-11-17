@@ -8,8 +8,6 @@
   const startButton = $("startButton");
   const statusText = $("status");
   const countdownText = $("countdown");
-  const resultSummary = $("resultSummary");
-  const summaryBalls = $("summaryBalls");
 
   let isDrawing = false;
 
@@ -118,11 +116,9 @@
       const start = nextStartTime;
       const end = start + duration;
 
-      // 첫 번째 소리
       if (drumSources.length === 0) {
         gain.gain.setValueAtTime(1, start);
       } else {
-        // 다음 소리를 미리 시작
         gain.gain.setValueAtTime(0, start);
 
         gain.gain.linearRampToValueAtTime(
@@ -130,7 +126,6 @@
           start + overlap
         );
 
-        // 이전 소리와 자연스럽게 연결
         const previous =
           drumSources[drumSources.length - 1];
 
@@ -153,7 +148,6 @@
 
       nextStartTime = end - overlap;
 
-      // 다음 소리 예약
       const delay = Math.max(
         0,
         (nextStartTime - audioContext.currentTime - 0.2) * 1000
@@ -326,14 +320,6 @@
       );
     });
 
-    if (resultSummary) {
-      resultSummary.style.display = "none";
-    }
-
-    if (summaryBalls) {
-      summaryBalls.innerHTML = "";
-    }
-
     if ($("fireworks")) {
       $("fireworks").classList.remove("active");
     }
@@ -371,7 +357,6 @@
     balls.forEach((ball, index) => {
       ball.classList.add("spinning");
 
-      // 모든 공이 각각 랜덤 숫자로 계속 변경
       const interval = setInterval(() => {
         ball.textContent =
           Math.floor(
@@ -423,39 +408,27 @@
   async function revealBall(index, number, isLast) {
     const ball = balls[index];
 
-    // 마지막 공이 아니면 일반 공개 시간
     if (isLast) {
       await wait(LOTTO_CONFIG.lastNumberPause);
     } else {
       await wait(LOTTO_CONFIG.revealInterval);
     }
 
-    // 해당 공만 회전 정지
     stopBallSpinning(index);
 
-    // 당첨 번호 표시
     ball.textContent = number;
     ball.classList.add("revealed");
 
-    // 마지막 공 처리
     if (isLast) {
       ball.classList.add("last");
 
-      // 드럼롤 정지
       stopDrumRoll();
 
-      // 쾅 소리
       playBoom();
     }
 
     await wait(LOTTO_CONFIG.afterRevealDelay);
   }
-
-  // =====================================
-  // 최종 결과 표시
-  // =====================================
-
-  
 
   // =====================================
   // 추첨 시작
@@ -471,7 +444,7 @@
     resetBalls();
 
     try {
-      // 오디오 미리 준비
+      // 오디오 준비
       await prepareAudio();
 
       if (statusText) {
@@ -488,7 +461,7 @@
       // 드럼롤 시작
       playDrumRoll();
 
-      // 6개 공 모두 동시에 회전 시작
+      // 6개 공 모두 동시에 회전
       startAllBallsSpinning();
 
       // 최종 당첨 번호 생성
@@ -508,8 +481,10 @@
       // 남아 있는 회전 정리
       stopAllBallSpinning();
 
-      // 결과 표시
-      showResult(numbers);
+      // 최종 결과 화면 없이 추첨 완료
+      if (statusText) {
+        statusText.textContent = "추첨 완료!";
+      }
 
     } catch (error) {
       console.error("추첨 오류:", error);
