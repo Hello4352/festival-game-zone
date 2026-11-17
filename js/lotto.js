@@ -9,6 +9,11 @@
   const statusText = $("status");
   const countdownText = $("countdown");
 
+  const fireworksCanvas = $("fireworks");
+  const fireworksCtx = fireworksCanvas
+    ? fireworksCanvas.getContext("2d")
+    : null;
+
   let isDrawing = false;
 
   // 오디오 변수
@@ -21,6 +26,13 @@
 
   // 공 회전 변수
   let ballIntervals = [];
+
+  // 폭죽 변수
+  let fireworksParticles = [];
+  let fireworksAnimation = null;
+  let fireworksTimers = [];
+  let fireworksRunning = false;
+  let fireworksEndTimer = null;
 
   const LOTTO_CONFIG = {
     countdownSeconds: 3,
@@ -61,6 +73,10 @@
     if (!audioContext) {
       const AudioContextClass =
         window.AudioContext || window.webkitAudioContext;
+
+      if (!AudioContextClass) {
+        throw new Error("이 브라우저는 오디오를 지원하지 않습니다.");
+      }
 
       audioContext = new AudioContextClass();
     }
@@ -274,6 +290,210 @@
   }
 
   // =====================================
+  // 폭죽 캔버스 크기 설정
+  // =====================================
+
+  function resizeFireworksCanvas() {
+    if (!fireworksCanvas || !fireworksCtx) return;
+
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+
+    fireworksCanvas.width = window.innerWidth * ratio;
+    fireworksCanvas.height = window.innerHeight * ratio;
+
+    fireworksCtx.setTransform(
+      ratio,
+      0,
+      0,
+      ratio,
+      0,
+      0
+    );
+  }
+
+  window.addEventListener("resize", resizeFireworksCanvas);
+  resizeFireworksCanvas();
+
+  // =====================================
+  // 폭죽 하나 생성
+  // =====================================
+
+  function createFirework(x, y) {
+    const colors = [
+      "#ffdf70",
+      "#ff526b",
+      "#52e5ff",
+      "#a77bff",
+      "#ffffff",
+      "#5cff9d",
+      "#ff9d42"
+    ];
+
+    const color = colors[
+      Math.floor(Math.random() * colors.length)
+    ];
+
+    const particleCount = 65;
+
+    for (let i = 0; i < particleCount; i++) {
+      const angle =
+        (Math.PI * 2 * i) / particleCount +
+        (Math.random() - 0.5) * 0.12;
+
+      const speed = 2 + Math.random() * 5;
+
+      fireworksParticles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        decay: 0.008 + Math.random() * 0.012,
+        radius: 1.5 + Math.random() * 2.5,
+        color
+      });
+    }
+  }
+
+  // =====================================
+  // 폭죽 애니메이션
+  // =====================================
+
+  function animateFireworks() {
+    if (!fireworksCtx || !fireworksCanvas) return;
+
+    const ctx = fireworksCtx;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    ctx.clearRect(0, 0, width, height);
+
+    for (let i = fireworksParticles.length - 1; i >= 0; i--) {
+      const p = fireworksParticles[i];
+
+      p.x += p.vx;
+      p.y += p.vy;
+
+      p.vy += 0.045;
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+
+      p.alpha -= p.decay;
+
+      if (p.alpha <= 0) {
+        fireworksParticles.splice(i, 1);
+        continue;
+      }
+
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = p.color;
+
+      ctx.beginPath();
+      ctx.arc(
+        p.x,
+        p.y,
+        p.radius,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+
+    if (fireworksRunning || fireworksParticles.length > 0) {
+      fireworksAnimation =
+        requestAnimationFrame(animateFireworks);
+    } else {
+      ctx.clearRect(0, 0, width, height);
+      fireworksAnimation = null;
+    }
+  }
+
+  // =====================================
+  // 폭죽 시작
+  // =====================================
+
+  function launchFireworks() {
+    if (!fireworksCanvas || !fireworksCtx) return;
+
+    stopFireworks();
+
+    fireworksRunning = true;
+    fireworksCanvas.classList.add("active");
+
+    // 폭죽 4회 발사
+    const launchTimes = [0, 450, 950, 1500];
+
+    launchTimes.forEach((delay) => {
+      const timer = setTimeout(() => {
+        const x =
+          window.innerWidth * (0.15 + Math.random() * 0.7);
+
+        const y =
+          window.innerHeight * (0.15 + Math.random() * 0.4);
+
+        createFirework(x, y);
+
+      }, delay);
+
+      fireworksTimers.push(timer);
+    });
+
+    if (!fireworksAnimation) {
+      animateFireworks();
+    }
+
+    // 약 4.5초 후 폭죽 종료
+    fireworksEndTimer = setTimeout(() => {
+      fireworksRunning = false;
+
+      fireworksCanvas.classList.remove("active");
+
+    }, 4500);
+  }
+
+  // =====================================
+  // 폭죽 정지 및 초기화
+  // =====================================
+
+  function stopFireworks() {
+    fireworksTimers.forEach((timer) => {
+      clearTimeout(timer);
+    });
+
+    fireworksTimers = [];
+
+    if (fireworksEndTimer) {
+      clearTimeout(fireworksEndTimer);
+      fireworksEndTimer = null;
+    }
+
+    fireworksRunning = false;
+    fireworksParticles = [];
+
+    if (fireworksAnimation) {
+      cancelAnimationFrame(fireworksAnimation);
+      fireworksAnimation = null;
+    }
+
+    if (fireworksCtx && fireworksCanvas) {
+      fireworksCtx.clearRect(
+        0,
+        0,
+        window.innerWidth,
+        window.innerHeight
+      );
+
+      fireworksCanvas.classList.remove("active");
+    }
+  }
+
+  // =====================================
   // 대기 함수
   // =====================================
 
@@ -286,27 +506,30 @@
   // =====================================
 
   function generateNumbers() {
-  const numbers = [];
+    const numbers = [];
 
-  while (numbers.length < 6) {
-    const number = Math.floor(
-      Math.random() * (LOTTO_CONFIG.maxNumber - LOTTO_CONFIG.minNumber + 1)
-    ) + LOTTO_CONFIG.minNumber;
+    while (numbers.length < 6) {
+      const number = Math.floor(
+        Math.random() *
+        (LOTTO_CONFIG.maxNumber - LOTTO_CONFIG.minNumber + 1)
+      ) + LOTTO_CONFIG.minNumber;
 
-    if (!numbers.includes(number)) {
-      numbers.push(number);
+      if (!numbers.includes(number)) {
+        numbers.push(number);
+      }
     }
+
+    // 오름차순 정렬하지 않고 추첨 순서 유지
+    return numbers;
   }
 
-  // 오름차순 정렬 없이 추첨된 순서 그대로 반환
-  return numbers;
-  }
   // =====================================
   // 공 초기화
   // =====================================
 
   function resetBalls() {
     stopAllBallSpinning();
+    stopFireworks();
 
     balls.forEach((ball) => {
       ball.textContent = "?";
@@ -317,10 +540,6 @@
         "spinning"
       );
     });
-
-    if ($("fireworks")) {
-      $("fireworks").classList.remove("active");
-    }
   }
 
   // =====================================
@@ -478,6 +697,9 @@
 
       // 남아 있는 회전 정리
       stopAllBallSpinning();
+
+      // 폭죽 실행
+      launchFireworks();
 
       // 최종 결과 화면 없이 추첨 완료
       if (statusText) {
