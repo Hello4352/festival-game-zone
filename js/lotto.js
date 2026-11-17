@@ -286,23 +286,21 @@
   // =====================================
 
   function generateNumbers() {
-    const numbers = [];
+  const numbers = [];
 
-    while (numbers.length < balls.length) {
-      const number =
-        Math.floor(
-          Math.random() *
-          (LOTTO_CONFIG.maxNumber - LOTTO_CONFIG.minNumber + 1)
-        ) + LOTTO_CONFIG.minNumber;
+  while (numbers.length < 6) {
+    const number = Math.floor(
+      Math.random() * (LOTTO_CONFIG.maxNumber - LOTTO_CONFIG.minNumber + 1)
+    ) + LOTTO_CONFIG.minNumber;
 
-      if (!numbers.includes(number)) {
-        numbers.push(number);
-      }
+    if (!numbers.includes(number)) {
+      numbers.push(number);
     }
-
-    return numbers.sort((a, b) => a - b);
   }
 
+  // 오름차순 정렬 없이 추첨된 순서 그대로 반환
+  return numbers;
+  }
   // =====================================
   // 공 초기화
   // =====================================
