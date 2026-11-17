@@ -1,4 +1,3 @@
-
 (() => {
   "use strict";
 
@@ -19,10 +18,7 @@
   // 오디오 변수
   let audioContext = null;
   let drumBuffer = null;
-  let drumSources = [];
-  let drumGain = null;
-  let drumTimer = null;
-  let drumPlaying = false;
+  let drumSource = null;
 
   // 공 회전 변수
   let ballIntervals = [];
@@ -100,7 +96,7 @@
   }
 
   // =====================================
-  // 드럼롤 재생
+  // 드럼롤 1회 재생
   // =====================================
 
   function playDrumRoll() {
@@ -108,71 +104,20 @@
 
     if (!drumBuffer || !audioContext) return;
 
-    drumPlaying = true;
+    const source = audioContext.createBufferSource();
 
-    const duration = drumBuffer.duration;
-    const overlap = LOTTO_CONFIG.audioOverlap;
+    source.buffer = drumBuffer;
+    source.connect(audioContext.destination);
 
-    drumGain = audioContext.createGain();
-    drumGain.gain.value = 1;
-    drumGain.connect(audioContext.destination);
+    drumSource = source;
 
-    let nextStartTime = audioContext.currentTime + 0.05;
-
-    function scheduleDrum() {
-      if (!drumPlaying || !drumGain) return;
-
-      const source = audioContext.createBufferSource();
-      const gain = audioContext.createGain();
-
-      source.buffer = drumBuffer;
-      source.connect(gain);
-      gain.connect(drumGain);
-
-      const start = nextStartTime;
-      const end = start + duration;
-
-      if (drumSources.length === 0) {
-        gain.gain.setValueAtTime(1, start);
-      } else {
-        gain.gain.setValueAtTime(0, start);
-
-        gain.gain.linearRampToValueAtTime(
-          1,
-          start + overlap
-        );
-
-        const previous =
-          drumSources[drumSources.length - 1];
-
-        previous.gain.gain.cancelScheduledValues(start);
-
-        previous.gain.gain.setValueAtTime(1, start);
-
-        previous.gain.gain.linearRampToValueAtTime(
-          0,
-          start + overlap
-        );
+    source.onended = () => {
+      if (drumSource === source) {
+        drumSource = null;
       }
+    };
 
-      source.start(start);
-
-      drumSources.push({
-        source,
-        gain
-      });
-
-      nextStartTime = end - overlap;
-
-      const delay = Math.max(
-        0,
-        (nextStartTime - audioContext.currentTime - 0.2) * 1000
-      );
-
-      drumTimer = setTimeout(scheduleDrum, delay);
-    }
-
-    scheduleDrum();
+    source.start();
   }
 
   // =====================================
@@ -180,33 +125,14 @@
   // =====================================
 
   function stopDrumRoll() {
-    drumPlaying = false;
+    if (!drumSource) return;
 
-    if (drumTimer) {
-      clearTimeout(drumTimer);
-      drumTimer = null;
-    }
+    const source = drumSource;
+    drumSource = null;
 
-    if (drumGain && audioContext) {
-      const now = audioContext.currentTime;
-
-      drumGain.gain.cancelScheduledValues(now);
-
-      drumGain.gain.setTargetAtTime(
-        0,
-        now,
-        0.015
-      );
-    }
-
-    drumSources.forEach(({ source }) => {
-      try {
-        source.stop(audioContext.currentTime + 0.05);
-      } catch (error) {}
-    });
-
-    drumSources = [];
-    drumGain = null;
+    try {
+      source.stop();
+    } catch (error) {}
   }
 
   // =====================================
@@ -638,8 +564,6 @@
 
     if (isLast) {
       ball.classList.add("last");
-
-      stopDrumRoll();
 
       playBoom();
     }
