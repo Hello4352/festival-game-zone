@@ -27,8 +27,8 @@
   const LOTTO_CONFIG = {
     countdownSeconds: 3,
     spinInterval: 110,
-    revealInterval: 2800,
-    lastNumberPause: 2800,
+    revealInterval: 2000,
+    lastNumberPause: 3000,
     afterRevealDelay: 350,
     minNumber: 1,
     maxNumber: 45,
@@ -455,32 +455,7 @@
   // 최종 결과 표시
   // =====================================
 
-  function showResult(numbers) {
-    if (resultSummary) {
-      resultSummary.style.display = "block";
-    }
-
-    if (summaryBalls) {
-      summaryBalls.innerHTML = "";
-
-      numbers.forEach((number) => {
-        const span = document.createElement("span");
-
-        span.className = "summary-number";
-        span.textContent = number;
-
-        summaryBalls.appendChild(span);
-      });
-    }
-
-    if (statusText) {
-      statusText.textContent = "추첨 완료!";
-    }
-
-    if ($("fireworks")) {
-      $("fireworks").classList.add("active");
-    }
-  }
+  
 
   // =====================================
   // 추첨 시작
